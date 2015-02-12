@@ -1,7 +1,6 @@
 #!/usr/bin/ruby -w
 
-$: << "../../sexp_processor/dev/lib"
-$: << "../../ruby_parser/dev/lib"
+$:.unshift "../../sexp_processor/dev/lib"
 
 require "ruby_parser"
 require "sexp_processor"
@@ -13,7 +12,7 @@ class Debride < MethodBasedSexpProcessor
   def self.run args
     callers = Debride.new
 
-    Debride.expand_dirs_to_files(args).each do |path|
+    expand_dirs_to_files(args).each do |path|
       warn "processing: #{path}"
       parser = RubyParser.new
       callers.process parser.process File.read(path), path
@@ -23,7 +22,7 @@ class Debride < MethodBasedSexpProcessor
   end
 
   attr_accessor :known, :called
-  attr_accessor :map
+  attr_accessor :map # TODO: retire and use method_locations
 
   def initialize
     self.known  = Hash.new { |h,k| h[k] = Set.new }
@@ -35,7 +34,6 @@ class Debride < MethodBasedSexpProcessor
   def process_defn sexp
     super do
       method_name = self.method_name[1..-1].to_sym
-# p self.method_name => method_name
       map[klass_name][method_name] = signature
       known[method_name] << klass_name
       process_until_empty sexp
@@ -45,7 +43,6 @@ class Debride < MethodBasedSexpProcessor
   def process_defs sexp
     super do
       method_name = self.method_name[2..-1].to_sym
-# p self.method_name => method_name
       map[klass_name][method_name] = signature
       known[method_name] << klass_name
       process_until_empty sexp
