@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require "debride"
+
+Debride.run(ARGV).report
