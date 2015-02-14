@@ -4,16 +4,19 @@ $:.unshift "../../sexp_processor/dev/lib"
 
 require "ruby_parser"
 require "sexp_processor"
+require "optparse"
 require "set"
 
 class Debride < MethodBasedSexpProcessor
   VERSION = "1.0.0"
 
   def self.run args
-    callers = Debride.new
+    opt = parse_options args
+
+    callers = Debride.new opt
 
     expand_dirs_to_files(args).each do |path|
-      warn "processing: #{path}"
+      warn "processing: #{path}" if opt[:verbose]
       parser = RubyParser.new
       callers.process parser.process File.read(path), path
     end
@@ -21,19 +24,58 @@ class Debride < MethodBasedSexpProcessor
     callers
   end
 
+  def self.parse_options args
+    options = {}
+
+    OptionParser.new do |opts|
+      opts.banner  = "debride [options] files_or_dirs"
+      opts.version = Debride::VERSION
+
+      opts.separator ""
+      opts.separator "Specific options:"
+      opts.separator ""
+
+      opts.on("-h", "--help", "Display this help.") do
+        puts opts
+        exit
+      end
+
+      # opts.on("-e", "--exclude FILE", String, "Exclude these messages.") do |s|
+      #   options[:exclude] = s
+      # end
+
+      opts.on("-v", "--verbose", "Verbose. Show progress processing files.") do
+        options[:verbose] = true
+      end
+
+      opts.parse! args
+    end
+
+    options
+  end
+
   attr_accessor :known, :called
+  attr_accessor :option
   attr_accessor :map # TODO: retire and use method_locations
 
-  def initialize
+  def initialize options = {}
+    self.option = options
     self.known  = Hash.new { |h,k| h[k] = Set.new }
     self.called = Set.new
     self.map    = Hash.new { |h,k| h[k] = {} }
-    super
+    super()
+  end
+
+  def klass_name
+    super.to_s
+  end
+
+  def method_name
+    super.to_s.sub(/^::|#/, "").to_sym
   end
 
   def process_defn sexp
     super do
-      method_name = self.method_name[1..-1].to_sym
       map[klass_name][method_name] = signature
       known[method_name] << klass_name
       process_until_empty sexp
@@ -42,7 +84,6 @@ class Debride < MethodBasedSexpProcessor
 
   def process_defs sexp
     super do
-      method_name = self.method_name[2..-1].to_sym
       map[klass_name][method_name] = signature
       known[method_name] << klass_name
       process_until_empty sexp
@@ -79,7 +120,7 @@ class Debride < MethodBasedSexpProcessor
       by_class[klass] = meths.sort
     end
 
-    by_class.sort
+    by_class.sort_by { |k,v| k }
   end
 
   def report
