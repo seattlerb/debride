@@ -5,19 +5,26 @@ rdoc :: http://docs.seattlerb.org/debride
 
 == DESCRIPTION:
 
-FIX (describe your package)
+Analyze code for potentially uncalled / dead methods.
 
 == FEATURES/PROBLEMS:
 
-* FIX (list of features or problems)
+* Static analysis of code. Can be easily hooked up to a CI.
+* As with all static analysis tools of dynamic languages, can't be 100%.
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+  % debride lib test
+
+  These methods MIGHT not be called:
+
+  MyClass
+    method!                            lib/some/file.rb:16
+  ...
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+* ruby 1.8+
 
 == INSTALL:
 
