@@ -7,8 +7,14 @@ require "sexp_processor"
 require "optparse"
 require "set"
 
+##
+# A static code analyzer that points out possible dead methods.
+
 class Debride < MethodBasedSexpProcessor
-  VERSION = "1.0.0"
+  VERSION = "1.0.0" # :nodoc:
+
+  ##
+  # Top level runner for bin/debride.
 
   def self.run args
     opt = parse_options args
@@ -23,6 +29,9 @@ class Debride < MethodBasedSexpProcessor
 
     callers
   end
+
+  ##
+  # Parse command line options and return a hash of parsed option values.
 
   def self.parse_options args
     options = {}
@@ -54,9 +63,24 @@ class Debride < MethodBasedSexpProcessor
     options
   end
 
-  attr_accessor :known, :called
+  ##
+  # A collection of know methods, mapping method name to implementing classes.
+
+  attr_accessor :known
+
+  ##
+  # A set of called method names.
+
+  attr_accessor :called
+
+  ##
+  # Command-line options.
+
   attr_accessor :option
-  attr_accessor :map # TODO: retire and use method_locations
+  attr_accessor :map # :nodoc: # TODO: retire and use method_locations
+
+  ##
+  # Create a new Debride instance w/ +options+
 
   def initialize options = {}
     self.option = options
@@ -66,15 +90,15 @@ class Debride < MethodBasedSexpProcessor
     super()
   end
 
-  def klass_name
+  def klass_name # :nodoc:
     super.to_s
   end
 
-  def method_name
+  def method_name # :nodoc:
     super.to_s.sub(/^::|#/, "").to_sym
   end
 
-  def process_defn sexp
+  def process_defn sexp # :nodoc:
     super do
       map[klass_name][method_name] = signature
       known[method_name] << klass_name
@@ -82,7 +106,7 @@ class Debride < MethodBasedSexpProcessor
     end
   end
 
-  def process_defs sexp
+  def process_defs sexp # :nodoc:
     super do
       map[klass_name][method_name] = signature
       known[method_name] << klass_name
@@ -90,7 +114,7 @@ class Debride < MethodBasedSexpProcessor
     end
   end
 
-  def process_call sexp
+  def process_call sexp # :nodoc:
     method_name = sexp[2]
     method_name = :initialize if method_name == :new
 
@@ -104,6 +128,9 @@ class Debride < MethodBasedSexpProcessor
 
     sexp
   end
+
+  ##
+  # Calculate the difference between known methods and called methods.
 
   def missing
     not_called = known.keys - called.to_a
@@ -122,6 +149,9 @@ class Debride < MethodBasedSexpProcessor
 
     by_class.sort_by { |k,v| k }
   end
+
+  ##
+  # Print out a report of suspects.
 
   def report
     puts "These methods MIGHT not be called:"
