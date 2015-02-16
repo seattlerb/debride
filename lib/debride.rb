@@ -117,7 +117,7 @@ class Debride < MethodBasedSexpProcessor
     end
 
     by_class.each do |klass, meths|
-      by_class[klass] = meths.sort
+      by_class[klass] = meths.sort_by(&:to_s)
     end
 
     by_class.sort_by { |k,v| k }
