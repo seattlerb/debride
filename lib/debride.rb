@@ -1,7 +1,5 @@
 #!/usr/bin/ruby -w
 
-$:.unshift "../../sexp_processor/dev/lib"
-
 require "ruby_parser"
 require "sexp_processor"
 require "optparse"
