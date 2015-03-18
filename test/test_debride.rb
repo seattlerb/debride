@@ -18,6 +18,7 @@ class TestDebride < Minitest::Test
   def assert_option arg, rest, exp_opt
     opt = Debride.parse_options arg
 
+    exp_opt = {:whitelist => []}.merge exp_opt
     assert_equal exp_opt, opt
     assert_equal rest, arg
   end
@@ -30,9 +31,27 @@ class TestDebride < Minitest::Test
     assert_option %w[-v woot.rb], %w[woot.rb], :verbose => true
   end
 
-  def test_parse_options_exclude
-    skip "not yet"
+  def test_parse_options_whitelist
+    exp = File.readlines("Manifest.txt").map(&:chomp) # omg dumb
+    assert_option %w[--whitelist Manifest.txt], %w[], :whitelist => exp
+  end
 
-    assert_option %w[--exclude path], %w[], :exclude => "path"
+  def test_whitelist
+    debride = Debride.run %w[lib]
+    debride.option[:whitelist] = %w[process_defn]
+
+    exp = [["Debride",
+            [:process_call, :process_defs, :report, :run]]]
+
+    assert_equal exp, debride.missing
+  end
+
+  def test_whitelist_regexp
+    debride = Debride.run %w[lib]
+    debride.option[:whitelist] = %w[/^process_/ run]
+
+    exp = [["Debride", [:report]]]
+
+    assert_equal exp, debride.missing
   end
 end

@@ -34,7 +34,7 @@ class Debride < MethodBasedSexpProcessor
   # Parse command line options and return a hash of parsed option values.
 
   def self.parse_options args
-    options = {}
+    options = {:whitelist => []}
 
     OptionParser.new do |opts|
       opts.banner  = "debride [options] files_or_dirs"
@@ -49,9 +49,9 @@ class Debride < MethodBasedSexpProcessor
         exit
       end
 
-      # opts.on("-e", "--exclude FILE", String, "Exclude these messages.") do |s|
-      #   options[:exclude] = s
-      # end
+      opts.on("-w", "--whitelist FILE", String, "Whitelist these messages.") do |s|
+        options[:whitelist] = File.read(s).split(/\n+/) rescue []
+      end
 
       opts.on("-v", "--verbose", "Verbose. Show progress processing files.") do
         options[:verbose] = true
@@ -133,7 +133,20 @@ class Debride < MethodBasedSexpProcessor
   # Calculate the difference between known methods and called methods.
 
   def missing
+    whitelist_regexps = []
+
+    option[:whitelist].each do |s|
+      if s =~ /^\/.+?\/$/ then
+        whitelist_regexps << Regexp.new(s[1..-2])
+      else
+        called << s.to_sym
+      end
+    end
+
     not_called = known.keys - called.to_a
+
+    whitelist_regexp = Regexp.union whitelist_regexps
+    not_called.reject! { |s| whitelist_regexp =~ s }
 
     by_class = Hash.new { |h,k| h[k] = [] }
 
