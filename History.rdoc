@@ -1,3 +1,13 @@
+=== 1.1.0 / 2015-03-18
+
+* 1 minor enhancement:
+
+  * Added --whitelist option to exclude known false positives.
+
+* 1 bug fix:
+
+  * Fixed sexp_processor dependency
+
 === 1.0.0 / 2015-03-09
 
 * 1 major enhancement

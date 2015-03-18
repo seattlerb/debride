@@ -9,7 +9,7 @@ require "set"
 # A static code analyzer that points out possible dead methods.
 
 class Debride < MethodBasedSexpProcessor
-  VERSION = "1.0.0" # :nodoc:
+  VERSION = "1.1.0" # :nodoc:
 
   ##
   # Top level runner for bin/debride.
