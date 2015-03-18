@@ -36,6 +36,7 @@ API), then you can whitelist it:
     bad_method                          lib/some/file.rb:20
   ...
 
+You can also use regexps in your whitelist by delimiting them with //'s.
 
 == REQUIREMENTS:
 
