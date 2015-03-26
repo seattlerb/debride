@@ -10,6 +10,47 @@ require "set"
 
 class Debride < MethodBasedSexpProcessor
   VERSION = "1.1.0" # :nodoc:
+  PROJECT = "debride"
+
+  def self.expand_dirs_to_files *dirs # TODO: push back up to sexp_processor
+    extensions = self.file_extensions
+
+    dirs.flatten.map { |p|
+      if File.directory? p then
+        Dir[File.join(p, "**", "*.{#{extensions.join(",")}}")]
+      else
+        p
+      end
+    }.flatten.map { |s| s.sub(/^\.\//, "") } # strip "./" from paths
+  end
+
+  def self.load_plugins proj = PROJECT
+    unless defined? @@plugins then
+      @@plugins = []
+
+      task_re = /#{PROJECT}_task/o
+      plugins = Gem.find_files("#{PROJECT}_*.rb").reject { |p| p =~ task_re }
+
+      plugins.each do |plugin|
+        plugin_name = File.basename(plugin, ".rb").sub(/^#{PROJECT}_/o, "")
+        next if @@plugins.include? plugin_name
+        begin
+          load plugin
+          @@plugins << plugin_name
+        rescue LoadError => e
+          warn "error loading #{plugin.inspect}: #{e.message}. skipping..."
+        end
+      end
+    end
+
+    @@plugins
+  rescue
+    # ignore
+  end
+
+  def self.file_extensions
+    %w[rb rake] + load_plugins
+  end
 
   ##
   # Top level runner for bin/debride.
@@ -17,15 +58,38 @@ class Debride < MethodBasedSexpProcessor
   def self.run args
     opt = parse_options args
 
-    callers = Debride.new opt
+    debride = Debride.new opt
+    debride.run expand_dirs_to_files(args)
+    debride
+  end
 
-    expand_dirs_to_files(args).each do |path|
-      warn "processing: #{path}" if opt[:verbose]
-      parser = RubyParser.new
-      callers.process parser.process File.read(path), path
+  def run(*files)
+    files.flatten.each do |file|
+      warn "Processing #{file}" if option[:verbose]
+
+      ext = File.extname(file).sub(/^\./, "")
+      ext = "rb" if ext.nil? || ext.empty?
+      msg = "process_#{ext}"
+
+      unless respond_to? msg then
+        warn "  Unknown file type: #{ext}, defaulting to ruby" if option[:verbose]
+        msg = "process_rb"
+      end
+
+      begin
+        process send(msg, file)
+      rescue RuntimeError, SyntaxError => e
+        warn "  skipping #{file}: #{e.message}"
+      end
     end
+  end
 
-    callers
+  def process_rb file
+    begin
+      RubyParser.new.process(File.binread(file), file, option[:timeout])
+    rescue Timeout::Error
+      warn "TIMEOUT parsing #{file}. Skipping."
+    end
   end
 
   ##
@@ -114,9 +178,11 @@ class Debride < MethodBasedSexpProcessor
 
   def process_call sexp # :nodoc:
     method_name = sexp[2]
-    method_name = :initialize if method_name == :new
 
-    if method_name == :alias_method_chain
+    case method_name
+    when :new then
+      method_name = :initialize
+    when :alias_method_chain
       known[sexp[3]] << klass_name
     end
 

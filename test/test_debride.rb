@@ -10,7 +10,7 @@ class TestDebride < Minitest::Test
     end
 
     exp = [["Debride",
-            [:process_call, :process_defn, :process_defs, :report, :run]]]
+            [:process_call, :process_defn, :process_defs, :process_rb, :report]]]
 
     assert_equal exp, debride.missing
   end
@@ -41,7 +41,7 @@ class TestDebride < Minitest::Test
     debride.option[:whitelist] = %w[process_defn]
 
     exp = [["Debride",
-            [:process_call, :process_defs, :report, :run]]]
+            [:process_call, :process_defs, :process_rb, :report]]]
 
     assert_equal exp, debride.missing
   end
