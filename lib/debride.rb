@@ -9,7 +9,7 @@ require "set"
 # A static code analyzer that points out possible dead methods.
 
 class Debride < MethodBasedSexpProcessor
-  VERSION = "1.1.0" # :nodoc:
+  VERSION = "1.2.0" # :nodoc:
   PROJECT = "debride"
 
   def self.expand_dirs_to_files *dirs # TODO: push back up to sexp_processor

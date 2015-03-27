@@ -1,3 +1,13 @@
+=== 1.2.0 / 2015-03-26
+
+* 1 major enhancement:
+
+  * Added plugin system to allow processing of other file types.
+
+* 1 minor enhancement:
+
+  * Refactored code to allow for plugin system to do multi-phase processing.
+
 === 1.1.0 / 2015-03-18
 
 * 1 minor enhancement:
