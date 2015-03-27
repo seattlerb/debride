@@ -115,6 +115,10 @@ class Debride < MethodBasedSexpProcessor
         options[:whitelist] = File.read(s).split(/\n+/) rescue []
       end
 
+      opts.on("-r", "--rails", "Add some rails call conversions.") do
+        options[:rails] = true
+      end
+
       opts.on("-v", "--verbose", "Verbose. Show progress processing files.") do
         options[:verbose] = true
       end
@@ -182,8 +186,10 @@ class Debride < MethodBasedSexpProcessor
     case method_name
     when :new then
       method_name = :initialize
-    when :alias_method_chain
-      known[sexp[3]] << klass_name
+    when :alias_method_chain then
+      known[sexp[3]] << klass_name if option[:rails]
+    when /_path$/ then
+      method_name = method_name.to_s[0..-6].to_sym if option[:rails]
     end
 
     called << method_name

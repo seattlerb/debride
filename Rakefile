@@ -18,7 +18,7 @@ end
 task :rails do
   ENV["GEM_HOME"] = "tmp/isolate/ruby-2.0.0"
   ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate/ruby-2.0.0"
-  ruby "-Ilib:../../debride-erb/dev/lib bin/debride ~/Work/git/seattlerb.org/{app,lib} --whitelist ~/Work/git/seattlerb.org/whitelist.txt"
+  ruby "-Ilib:../../debride-erb/dev/lib bin/debride --rails ~/Work/git/seattlerb.org/{app,lib} --whitelist ~/Work/git/seattlerb.org/whitelist.txt"
 end
 
 # vim: syntax=ruby
