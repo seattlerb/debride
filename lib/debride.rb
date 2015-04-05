@@ -190,6 +190,11 @@ class Debride < MethodBasedSexpProcessor
       new_name = sexp[3]
       new_name = new_name.last if Sexp === new_name # when is this NOT the case?
       known[new_name] << klass_name if option[:rails]
+    when :send, :public_send, :__send__ then
+      sent_method = sexp[3]
+      if Sexp === sent_method && [:lit, :str].include?(sent_method.first)
+        called << sent_method.last.to_sym
+      end
     when /_path$/ then
       method_name = method_name.to_s[0..-6].to_sym if option[:rails]
     end
