@@ -54,4 +54,26 @@ class TestDebride < Minitest::Test
 
     assert_equal exp, debride.missing
   end
+
+  def test_alias_method_chain
+    file = Tempfile.new ["debride_test", ".rb"]
+
+    file.write <<-RUBY.strip
+      class QuarterPounder
+        def royale_with_cheese
+          1+1
+        end
+
+        alias_method_chain :royale, :cheese
+      end
+    RUBY
+
+    file.flush
+
+    debride = Debride.run [file.path, "--rails"]
+
+    exp = [["QuarterPounder", [:royale, :royale_with_cheese]]]
+
+    assert_equal exp, debride.missing
+  end
 end

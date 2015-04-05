@@ -187,7 +187,9 @@ class Debride < MethodBasedSexpProcessor
     when :new then
       method_name = :initialize
     when :alias_method_chain then
-      known[sexp[3]] << klass_name if option[:rails]
+      new_name = sexp[3]
+      new_name = new_name.last if Sexp === new_name # when is this NOT the case?
+      known[new_name] << klass_name if option[:rails]
     when /_path$/ then
       method_name = method_name.to_s[0..-6].to_sym if option[:rails]
     end
@@ -216,6 +218,7 @@ class Debride < MethodBasedSexpProcessor
     not_called = known.keys - called.to_a
 
     whitelist_regexp = Regexp.union whitelist_regexps
+
     not_called.reject! { |s| whitelist_regexp =~ s }
 
     by_class = Hash.new { |h,k| h[k] = [] }
