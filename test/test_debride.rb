@@ -104,4 +104,31 @@ class TestDebride < Minitest::Test
 
     assert_equal exp, debride.missing
   end
+
+  def test_rails_dsl_methods
+    file = Tempfile.new ["debride_test", ".rb"]
+
+    file.write <<-RUBY.strip
+      class RailsThing
+        def save_callback         ; 1 ; end
+        def action_filter         ; 1 ; end
+        def callback_condition    ; 1 ; end
+        def action_condition      ; 1 ; end
+        def string_condition      ; 1 ; end
+        def validation_condition  ; 1 ; end
+
+        before_save :save_callback, unless: :callback_condition
+        before_save :save_callback, if: 'string_condition'
+        before_action :action_filter, if: :action_condition, only: :new
+        after_save :save_callback, if: lambda {|r| true }
+        validates :database_column, if: :validation_condition
+      end
+    RUBY
+
+    file.flush
+
+    debride = Debride.run [file.path, "--rails"]
+
+    assert_equal [], debride.missing.sort
+  end
 end

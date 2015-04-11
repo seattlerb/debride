@@ -195,6 +195,30 @@ class Debride < MethodBasedSexpProcessor
       if Sexp === sent_method && [:lit, :str].include?(sent_method.first)
         called << sent_method.last.to_sym
       end
+     when *RAILS_VALIDATION_METHODS then
+       if option[:rails]
+         possible_hash = sexp.last
+         if Sexp === possible_hash && possible_hash.first == :hash
+           possible_hash[1..-1].each_slice(2) do |key, val|
+             called << val.last        if val.first == :lit
+             called << val.last.to_sym if val.first == :str
+           end
+         end
+       end
+     when *RAILS_DSL_METHODS then
+       if option[:rails]
+         new_name = sexp[3]
+         new_name = new_name.last if Sexp === new_name # when is this NOT the case?
+         called << new_name
+         possible_hash = sexp.last
+         if Sexp === possible_hash && possible_hash.first == :hash
+           possible_hash[1..-1].each_slice(2) do |key, val|
+             next unless Sexp === val
+             called << val.last        if val.first == :lit
+             called << val.last.to_sym if val.first == :str
+           end
+         end
+       end
     when /_path$/ then
       method_name = method_name.to_s[0..-6].to_sym if option[:rails]
     end
@@ -255,4 +279,46 @@ class Debride < MethodBasedSexpProcessor
       end
     end
   end
+
+  RAILS_DSL_METHODS = [
+    :after_action,
+    :around_action,
+    :before_action,
+
+    # http://api.rubyonrails.org/v4.2.1/classes/ActiveRecord/Callbacks.html
+    :after_commit,
+    :after_create,
+    :after_destroy,
+    :after_find,
+    :after_initialize,
+    :after_rollback,
+    :after_save,
+    :after_touch,
+    :after_update,
+    :after_validation,
+    :around_create,
+    :around_destroy,
+    :around_save,
+    :around_update,
+    :before_create,
+    :before_destroy,
+    :before_save,
+    :before_update,
+    :before_validation,
+  ]
+
+  # http://api.rubyonrails.org/v4.2.1/classes/ActiveModel/Validations/HelperMethods.html
+  RAILS_VALIDATION_METHODS = [
+    :validates,
+    :validates_absence_of,
+    :validates_acceptance_of,
+    :validates_confirmation_of,
+    :validates_exclusion_of,
+    :validates_format_of,
+    :validates_inclusion_of,
+    :validates_length_of,
+    :validates_numericality_of,
+    :validates_presence_of,
+    :validates_size_of,
+  ]
 end
