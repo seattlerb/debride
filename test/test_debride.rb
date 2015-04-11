@@ -76,4 +76,32 @@ class TestDebride < Minitest::Test
 
     assert_equal exp, debride.missing
   end
+
+  def test_method_send
+    file = Tempfile.new ["debride_test", ".rb"]
+
+    file.write <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+
+        def self.coffee
+          :good
+        end
+      end
+
+      Seattle.send :raining?
+      Seattle.__send__ "coffee"
+      Seattle.send "\#{foo}_bar"
+    RUBY
+
+    file.flush
+
+    debride = Debride.run [file.path]
+
+    exp = []
+
+    assert_equal exp, debride.missing
+  end
 end
