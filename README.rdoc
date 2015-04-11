@@ -46,6 +46,11 @@ You can also use regexps in your whitelist by delimiting them with //'s.
 
 * sudo gem install debride
 
+== CONTRIBUTING:
+
+* sudo gem install minitest
+* ruby -Ilib:test test/test_debride.rb
+
 == LICENSE:
 
 (The MIT License)

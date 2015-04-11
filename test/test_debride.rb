@@ -31,9 +31,24 @@ class TestDebride < Minitest::Test
     assert_option %w[-v woot.rb], %w[woot.rb], :verbose => true
   end
 
+  def test_parse_options_exclude
+    assert_option %w[--exclude moot.rb],   %w[],    :exclude => %w[moot.rb]
+    assert_option %w[-e moot lib],         %w[lib], :exclude => %w[moot]
+    assert_option %w[-e moot,moot.rb lib], %w[lib], :exclude => %w[moot moot.rb]
+  end
+
   def test_parse_options_whitelist
     exp = File.readlines("Manifest.txt").map(&:chomp) # omg dumb
     assert_option %w[--whitelist Manifest.txt], %w[], :whitelist => exp
+  end
+
+  def test_exclude_files
+    debride = Debride.run %w[--exclude test lib]
+
+    exp = [["Debride",
+            [:process_call, :process_defn, :process_defs, :process_rb, :report]]]
+
+    assert_equal exp, debride.missing
   end
 
   def test_whitelist

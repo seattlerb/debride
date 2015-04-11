@@ -59,7 +59,11 @@ class Debride < MethodBasedSexpProcessor
     opt = parse_options args
 
     debride = Debride.new opt
-    debride.run expand_dirs_to_files(args)
+
+    files = expand_dirs_to_files(args)
+    files -= expand_dirs_to_files(debride.option[:exclude]) if debride.option[:exclude]
+
+    debride.run(files)
     debride
   end
 
@@ -109,6 +113,10 @@ class Debride < MethodBasedSexpProcessor
       opts.on("-h", "--help", "Display this help.") do
         puts opts
         exit
+      end
+
+      opts.on("-e", "--exclude FILE1,FILE2,ETC", Array, "Exclude files or directories in comma-separated list.") do |list|
+        options[:exclude] = list
       end
 
       opts.on("-w", "--whitelist FILE", String, "Whitelist these messages.") do |s|
