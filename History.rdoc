@@ -1,3 +1,16 @@
+=== 1.3.0 / 2015-04-13
+
+* 4 minor enhancements:
+
+  * Add explicit #send support. (phiggins)
+  * Added --exclude for files and dirs. (ianlotinsky)
+  * Added --rails flag and rails-specific call transformations.
+  * Added methods to called list found in rails DSL methods. (phiggins)
+
+* 1 bug fix:
+
+  * Fixed bug with alias_method_chain. (phiggins)
+
 === 1.2.0 / 2015-03-26
 
 * 1 major enhancement:
