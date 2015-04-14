@@ -5,6 +5,16 @@ require "sexp_processor"
 require "optparse"
 require "set"
 
+# :stopdoc:
+class File
+  RUBY19 = "<3".respond_to? :encoding unless defined? RUBY19 # :nodoc:
+
+  class << self
+    alias :binread :read unless RUBY19
+  end
+end
+# :startdoc:
+
 ##
 # A static code analyzer that points out possible dead methods.
 
@@ -256,7 +266,7 @@ class Debride < MethodBasedSexpProcessor
 
     whitelist_regexp = Regexp.union whitelist_regexps
 
-    not_called.reject! { |s| whitelist_regexp =~ s }
+    not_called.reject! { |s| whitelist_regexp =~ s.to_s }
 
     by_class = Hash.new { |h,k| h[k] = [] }
 
