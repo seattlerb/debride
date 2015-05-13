@@ -102,6 +102,9 @@ class Debride < MethodBasedSexpProcessor
     begin
       warn "processing: #{file}" if option[:verbose]
       RubyParser.for_current_ruby.process(File.binread(file), file, option[:timeout])
+    rescue Racc::ParseError => e
+      warn "Parse Error parsing #{file}. Skipping."
+      warn "  #{e.message}"
     rescue Timeout::Error
       warn "TIMEOUT parsing #{file}. Skipping."
     end
