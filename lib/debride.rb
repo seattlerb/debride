@@ -112,7 +112,7 @@ class Debride < MethodBasedSexpProcessor
   def self.parse_options args
     options = {:whitelist => []}
 
-    OptionParser.new do |opts|
+    op = OptionParser.new do |opts|
       opts.banner  = "debride [options] files_or_dirs"
       opts.version = Debride::VERSION
 
@@ -143,6 +143,8 @@ class Debride < MethodBasedSexpProcessor
 
       opts.parse! args
     end
+
+    abort op.to_s if args.empty?
 
     options
   end
