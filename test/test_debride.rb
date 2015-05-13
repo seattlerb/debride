@@ -1,6 +1,12 @@
 require "minitest/autorun"
 require "debride"
 
+class SafeDebride < Debride
+  def self.abort s
+    raise s
+  end
+end
+
 class TestDebride < Minitest::Test
   def test_sanity
     debride = nil
@@ -15,31 +21,42 @@ class TestDebride < Minitest::Test
     assert_equal exp, debride.missing
   end
 
-  def assert_option arg, rest, exp_opt
-    opt = Debride.parse_options arg
+  def assert_option arg, exp_arg, exp_opt
+    opt = SafeDebride.parse_options arg
 
     exp_opt = {:whitelist => []}.merge exp_opt
     assert_equal exp_opt, opt
-    assert_equal rest, arg
+    assert_equal exp_arg, arg
   end
 
   def test_parse_options
-    assert_option %w[], %w[], {}
+    assert_option %w[--verbose woot.rb], %w[woot.rb], :verbose => true
+    assert_option %w[-v woot.rb],        %w[woot.rb], :verbose => true
+  end
 
-    assert_option %w[--verbose],  %w[],        :verbose => true
-    assert_option %w[-v],         %w[],        :verbose => true
-    assert_option %w[-v woot.rb], %w[woot.rb], :verbose => true
+  def test_parse_options_empty
+    e = assert_raises RuntimeError do
+      assert_option %w[], %w[], {}
+    end
+
+    assert_includes e.message, "debride [options] files_or_dirs"
+
+    e = assert_raises RuntimeError do
+      assert_option %w[-v], %w[], :verbose => true
+    end
+
+    assert_includes e.message, "debride [options] files_or_dirs"
   end
 
   def test_parse_options_exclude
-    assert_option %w[--exclude moot.rb],   %w[],    :exclude => %w[moot.rb]
-    assert_option %w[-e moot lib],         %w[lib], :exclude => %w[moot]
-    assert_option %w[-e moot,moot.rb lib], %w[lib], :exclude => %w[moot moot.rb]
+    assert_option %w[--exclude moot.rb lib], %w[lib], :exclude => %w[moot.rb]
+    assert_option %w[-e moot lib],           %w[lib], :exclude => %w[moot]
+    assert_option %w[-e moot,moot.rb lib],   %w[lib], :exclude => %w[moot moot.rb]
   end
 
   def test_parse_options_whitelist
     exp = File.readlines("Manifest.txt").map(&:chomp) # omg dumb
-    assert_option %w[--whitelist Manifest.txt], %w[], :whitelist => exp
+    assert_option %w[--whitelist Manifest.txt lib], %w[lib], :whitelist => exp
   end
 
   def test_exclude_files
