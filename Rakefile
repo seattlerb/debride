@@ -15,10 +15,28 @@ Hoe.spec "debride" do
   dependency "ruby_parser", "~> 3.6"
 end
 
-task :rails do
+def run dir, wl
   ENV["GEM_HOME"] = "tmp/isolate/ruby-2.0.0"
   ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate/ruby-2.0.0"
-  ruby "-Ilib:../../debride-erb/dev/lib bin/debride --rails ~/Work/git/seattlerb.org/{app,lib} --whitelist ~/Work/git/seattlerb.org/whitelist.txt"
+
+  abort "Specify dir to scan with D=<path>" unless dir
+  wl = "--whitelist #{wl}" if wl
+
+  ruby "-Ilib:../../debride-erb/dev/lib bin/debride --rails #{dir} #{wl}"
+end
+
+task :run do
+  run ENV["D"], ENV["W"]
+end
+
+task :rails do
+  d = "~/Work/git/seattlerb.org"
+  run "#{d}/{app,lib,config}", "#{d}/whitelist.txt"
+end
+
+task :debug do
+  f = ENV["F"]
+  run f, nil
 end
 
 # vim: syntax=ruby
