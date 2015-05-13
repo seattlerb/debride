@@ -8,7 +8,26 @@ class SafeDebride < Debride
 end
 
 class TestDebride < Minitest::Test
+  def assert_option arg, exp_arg, exp_opt
+    opt = SafeDebride.parse_options arg
+
+    exp_opt = {:whitelist => []}.merge exp_opt
+    assert_equal exp_opt, opt
+    assert_equal exp_arg, arg
+  end
+
+  def assert_process exp, ruby, opts = {}
+    io = StringIO.new ruby
+
+    debride = Debride.new opts
+    debride.process debride.process_rb io
+
+    assert_equal exp, debride.missing
+  end
+
   def test_sanity
+    skip "This is slow" unless ENV["SLOW"]
+
     debride = nil
 
     assert_silent do
@@ -19,14 +38,6 @@ class TestDebride < Minitest::Test
             [:process_call, :process_defn, :process_defs, :process_rb, :report]]]
 
     assert_equal exp, debride.missing
-  end
-
-  def assert_option arg, exp_arg, exp_opt
-    opt = SafeDebride.parse_options arg
-
-    exp_opt = {:whitelist => []}.merge exp_opt
-    assert_equal exp_opt, opt
-    assert_equal exp_arg, arg
   end
 
   def test_parse_options
@@ -60,6 +71,8 @@ class TestDebride < Minitest::Test
   end
 
   def test_exclude_files
+    skip "This is slow" unless ENV["SLOW"]
+
     debride = Debride.run %w[--exclude test lib]
 
     exp = [["Debride",
@@ -69,28 +82,80 @@ class TestDebride < Minitest::Test
   end
 
   def test_whitelist
-    debride = Debride.run %w[lib]
-    debride.option[:whitelist] = %w[process_defn]
+    ruby = <<-RUBY
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
 
-    exp = [["Debride",
-            [:process_call, :process_defs, :process_rb, :report]]]
+      # Seattle.raining?
+    RUBY
 
-    assert_equal exp, debride.missing
+    exp = [["Seattle", [:raining?]]]
+    assert_process exp, ruby
+
+    exp = []
+    assert_process exp, ruby, :whitelist => %w[raining?]
   end
 
   def test_whitelist_regexp
-    debride = Debride.run %w[lib]
-    debride.option[:whitelist] = %w[/^process_/ run]
+    ruby = <<-RUBY
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
 
-    exp = [["Debride", [:report]]]
+      # Seattle.raining?
+    RUBY
+
+    exp = [["Seattle", [:raining?]]]
+    assert_process exp, ruby
+
+    exp = []
+    assert_process exp, ruby, :whitelist => %w[/raining/]
+  end
+
+  def test_process_rb_path
+    file = Tempfile.new ["debride_test", ".rb"]
+
+    file.write <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
+
+      Seattle.raining?
+    RUBY
+
+    file.flush
+
+    debride = Debride.new
+    debride.process_rb file.path
+
+    exp = []
 
     assert_equal exp, debride.missing
   end
 
-  def test_alias_method_chain
-    file = Tempfile.new ["debride_test", ".rb"]
+  def test_process_rb_io
+    s = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
 
-    file.write <<-RUBY.strip
+      Seattle.raining?
+    RUBY
+
+    assert_process [], s
+  end
+
+  def test_alias_method_chain
+    ruby = <<-RUBY.strip
       class QuarterPounder
         def royale_with_cheese
           1+1
@@ -100,19 +165,13 @@ class TestDebride < Minitest::Test
       end
     RUBY
 
-    file.flush
-
-    debride = Debride.run [file.path, "--rails"]
-
     exp = [["QuarterPounder", [:royale, :royale_with_cheese]]]
 
-    assert_equal exp, debride.missing
+    assert_process exp, ruby, :rails => true
   end
 
   def test_method_send
-    file = Tempfile.new ["debride_test", ".rb"]
-
-    file.write <<-RUBY.strip
+    ruby = <<-RUBY.strip
       class Seattle
         def self.raining?
           true
@@ -128,19 +187,11 @@ class TestDebride < Minitest::Test
       Seattle.send "\#{foo}_bar"
     RUBY
 
-    file.flush
-
-    debride = Debride.run [file.path]
-
-    exp = []
-
-    assert_equal exp, debride.missing
+    assert_process [], ruby
   end
 
   def test_rails_dsl_methods
-    file = Tempfile.new ["debride_test", ".rb"]
-
-    file.write <<-RUBY.strip
+    ruby = <<-RUBY.strip
       class RailsThing
         def save_callback         ; 1 ; end
         def action_filter         ; 1 ; end
@@ -157,10 +208,6 @@ class TestDebride < Minitest::Test
       end
     RUBY
 
-    file.flush
-
-    debride = Debride.run [file.path, "--rails"]
-
-    assert_equal [], debride.missing.sort
+    assert_process [], ruby, :rails => true
   end
 end

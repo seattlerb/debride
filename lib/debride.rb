@@ -98,15 +98,25 @@ class Debride < MethodBasedSexpProcessor
     end
   end
 
-  def process_rb file
+  def process_rb path_or_io
     begin
-      warn "processing: #{file}" if option[:verbose]
-      RubyParser.for_current_ruby.process(File.binread(file), file, option[:timeout])
+      warn "processing: #{path}" if option[:verbose]
+
+      case path_or_io
+      when String then
+        path, file = path_or_io, File.binread(path_or_io)
+      when IO, StringIO then
+        path, file = "(io)", path_or_io.read
+      else
+        raise "Unhandled type: #{path_or_io.class}:#{path_or_io.inspect}"
+      end
+
+      RubyParser.for_current_ruby.process(file, path, option[:timeout])
     rescue Racc::ParseError => e
-      warn "Parse Error parsing #{file}. Skipping."
+      warn "Parse Error parsing #{path}. Skipping."
       warn "  #{e.message}"
     rescue Timeout::Error
-      warn "TIMEOUT parsing #{file}. Skipping."
+      warn "TIMEOUT parsing #{path}. Skipping."
     end
   end
 
@@ -173,7 +183,7 @@ class Debride < MethodBasedSexpProcessor
   # Create a new Debride instance w/ +options+
 
   def initialize options = {}
-    self.option = options
+    self.option = { :whitelist => [] }.merge options
     self.known  = Hash.new { |h,k| h[k] = Set.new }
     self.called = Set.new
     self.map    = Hash.new { |h,k| h[k] = {} }
