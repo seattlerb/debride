@@ -38,6 +38,11 @@ API), then you can whitelist it:
 
 You can also use regexps in your whitelist by delimiting them with //'s.
 
+== PLUGINS:
+
+debride-erb  :: Extends debride to analyze erb files (via erubis ala rails).
+debride-haml :: Plugin to allow debride to parse Haml files.
+
 == REQUIREMENTS:
 
 * ruby 1.8+
