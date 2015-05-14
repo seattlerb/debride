@@ -198,6 +198,41 @@ class Debride < MethodBasedSexpProcessor
     super.to_s.sub(/^::|#/, "").to_sym
   end
 
+  def process_cdecl exp # :nodoc:
+    _, name, val = exp
+    process val
+
+    map[klass_name][name] = "#{klass_name}::#{name}"
+    known[name] << klass_name
+
+    exp
+  end
+
+  def process_colon2 exp # :nodoc:
+    _, lhs, name = exp
+    process lhs
+
+    called << name
+
+    exp
+  end
+
+  def process_colon3 exp # :nodoc:
+    _, name = exp
+
+    called << name
+
+    exp
+  end
+
+  def process_const exp # :nodoc:
+    _, name = exp
+
+    called << name
+
+    exp
+  end
+
   def process_defn sexp # :nodoc:
     super do
       map[klass_name][method_name] = signature

@@ -210,4 +210,24 @@ class TestDebride < Minitest::Test
 
     assert_process [], ruby, :rails => true
   end
+
+  def test_constants
+    ruby = <<-RUBY.strip
+      class Constants
+        USED = 42
+        ALSO = 314
+        UNUSED = 24
+
+        def something
+          p USED
+        end
+      end
+
+      something
+      Constants::ALSO
+      ::Constants::ALSO
+    RUBY
+
+    assert_process [["Constants", [:UNUSED]]], ruby
+  end
 end
