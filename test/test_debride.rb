@@ -230,4 +230,25 @@ class TestDebride < Minitest::Test
 
     assert_process [["Constants", [:UNUSED]]], ruby
   end
+
+  def test_attr_accessor
+    ruby = <<-RUBY.strip
+      class AttributeAccessor
+        attr_accessor :a1, :a2, :a3
+        attr_writer :w1, :w2
+        attr_reader :r1, :r2
+        def initialize
+          self.a2 = 'Bar'
+          self.w1 = 'W'
+        end
+      end
+
+      object = AttributeAccessor.new
+      object.a1
+      object.r1
+      object.a3 = 'Baz'
+    RUBY
+
+    assert_process [["AttributeAccessor", [:a1=, :a2, :a3, :r2, :w2=]]], ruby
+  end
 end
