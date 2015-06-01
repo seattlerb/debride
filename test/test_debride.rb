@@ -65,6 +65,17 @@ class TestDebride < Minitest::Test
     assert_option %w[-e moot,moot.rb lib],   %w[lib], :exclude => %w[moot moot.rb]
   end
 
+  def test_parse_options_focus
+    assert_option %w[-f lib lib], %w[lib], :focus => "lib/*"
+    assert_option %w[--focus lib lib], %w[lib], :focus => "lib/*"
+
+    e = assert_raises RuntimeError do
+      assert_option %w[-f missing lib], %w[], :verbose => true
+    end
+
+    assert_includes e.message, "ERROR: --focus path missing doesn't exist."
+  end
+
   def test_parse_options_whitelist
     exp = File.readlines("Manifest.txt").map(&:chomp) # omg dumb
     assert_option %w[--whitelist Manifest.txt lib], %w[lib], :whitelist => exp

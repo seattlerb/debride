@@ -147,6 +147,16 @@ class Debride < MethodBasedSexpProcessor
         options[:whitelist] = File.read(s).split(/\n+/) rescue []
       end
 
+      opts.on("-f", "--focus PATH", String, "Only report against this path") do |s|
+        unless File.exist? s then
+          abort "ERROR: --focus path #{s} doesn't exist."
+        end
+
+        s = "#{s.chomp "/"}/*" if File.directory?(s)
+
+        options[:focus] = s
+      end
+
       opts.on("-r", "--rails", "Add some rails call conversions.") do
         options[:rails] = true
       end
@@ -154,13 +164,18 @@ class Debride < MethodBasedSexpProcessor
       opts.on("-v", "--verbose", "Verbose. Show progress processing files.") do
         options[:verbose] = true
       end
-
-      opts.parse! args
     end
+
+    op.parse! args
 
     abort op.to_s if args.empty?
 
     options
+  rescue OptionParser::InvalidOption => e
+    warn op.to_s
+    warn ""
+    warn e.message
+    exit 1
   end
 
   ##
@@ -338,14 +353,30 @@ class Debride < MethodBasedSexpProcessor
   # Print out a report of suspects.
 
   def report
+    focus = option[:focus]
+
+    if focus then
+      puts "Focusing on #{focus}"
+      puts
+    end
+
     puts "These methods MIGHT not be called:"
 
     missing.each do |klass, meths|
+      bad = meths.map { |meth|
+        location = method_locations[map[klass][meth]]
+        path = location[/(.+):\d+$/, 1]
+
+        next if focus and not File.fnmatch(focus, path)
+
+        "  %-35s %s" % [meth, location]
+      }
+      bad.compact!
+      next if bad.empty?
+
       puts
       puts klass
-      meths.each do |meth|
-        puts "  %-35s %s" % [meth, method_locations[map[klass][meth]]]
-      end
+      puts bad.join "\n"
     end
   end
 
