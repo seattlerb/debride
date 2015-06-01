@@ -4,5 +4,6 @@ Manifest.txt
 README.rdoc
 Rakefile
 bin/debride
+bin/debride_rails_whitelist
 lib/debride.rb
 test/test_debride.rb

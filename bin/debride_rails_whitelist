@@ -1,0 +1,51 @@
+#!/usr/bin/ruby -w
+
+route  = ARGV.shift
+routes = {}
+verbs  = "(?:GET|POST|PUT|PATCH|DELETE)"
+
+unless route then
+  cmd = File.basename $0
+  warn "error: no files given"
+  warn "usage:"
+  warn "  rake routes > routes.txt"
+  warn "  #{cmd} routes.txt logfiles... | sort -u > whitelist.txt"
+  abort
+end
+
+File.foreach route do |line|
+  case line.chomp
+  when /^\s+Prefix/, "" then
+    # ignore
+  when /^Routes for /
+    break
+  when /^\s*(\w+) (#{verbs})\s+(\S+)\s+([\w\/]+#\w+)/ then
+    _, verb, path, action = $1, $2, $3, $4
+    path.sub!(/..:format./, '\\/?')
+    path.sub!(/:id/, '\\d+')
+    routes[/^#{verb} #{path}$/] = action.split(/#/).last
+  when /^\s*(GET|POST|PUT|PATCH|DELETE)\s+(\S+)\s+([\w\/]+#\w+)/ then
+    verb, path, action = $1, $2, $3
+    path.sub!(/..:format./, '')
+    path.sub!(/:id/, '\\d+')
+    routes[/^#{verb} #{path}$/] = action.split(/#/).last
+  else
+    # warn "unparsed: #{line.chomp}"
+  end
+end
+
+ARGF.each_line do |line|
+  case line
+  when /Processing by (\w+)#(\w+) as/ then
+    _, action = $1, $2
+    puts action
+  when /Started (#{verbs}) \"([^"]+)\"/, /method=(#{verbs}) path="([^"]+)"/ then
+    verb, path = $1, $2
+
+    _, action = routes.find { |k,v| "#{verb} #{path}" =~ k }
+
+    puts action if action
+  else
+    # warn "unparsed: #{line.chomp}"
+  end
+end
