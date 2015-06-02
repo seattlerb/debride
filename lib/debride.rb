@@ -432,6 +432,9 @@ class Debride < MethodBasedSexpProcessor
     :before_save,
     :before_update,
     :before_validation,
+
+    # http://api.rubyonrails.org/classes/ActiveModel/Validations/ClassMethods.html#method-i-validate
+    :validate,
   ]
 
   # http://api.rubyonrails.org/v4.2.1/classes/ActiveModel/Validations/HelperMethods.html

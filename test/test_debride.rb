@@ -210,12 +210,14 @@ class TestDebride < Minitest::Test
         def action_condition      ; 1 ; end
         def string_condition      ; 1 ; end
         def validation_condition  ; 1 ; end
+        def some_validation_method; 1 ; end
 
         before_save :save_callback, unless: :callback_condition
         before_save :save_callback, if: 'string_condition'
         before_action :action_filter, if: :action_condition, only: :new
         after_save :save_callback, if: lambda {|r| true }
         validates :database_column, if: :validation_condition
+        validate :some_validation_method
       end
     RUBY
 
