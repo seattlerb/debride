@@ -251,4 +251,23 @@ class TestDebride < Minitest::Test
 
     assert_process [["AttributeAccessor", [:a1=, :a2, :a3, :r2, :w2=]]], ruby
   end
+
+  def test_attr_accessor_with_hash_default_value
+    ruby = <<-RUBY.strip
+      class AttributeAccessor
+        attr_accessor :a1
+        def initialize(options = {})
+          self.a1 = options.fetch(:a1) { default_a1 }
+        end
+
+        def default_a1
+          'the default_a1'
+        end
+      end
+
+      object = AttributeAccessor.new
+    RUBY
+
+    assert_process [["AttributeAccessor", [:a1]]], ruby
+  end
 end

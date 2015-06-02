@@ -322,6 +322,7 @@ class Debride < MethodBasedSexpProcessor
     method_name = sexp[2]
     method_name = method_name.last if Sexp === method_name
     called << method_name
+    process_until_empty sexp
     sexp
   end
 
