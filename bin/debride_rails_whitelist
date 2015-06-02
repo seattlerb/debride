@@ -36,20 +36,34 @@ end
 
 warn "NOTE: No logs provided. Scanning stdin." if ARGV.empty?
 
-ARGF.each_line do |line|
-  $stderr.print "." if $. % 10_000 == 0
-  case line
-  when /Processing by (\w+)#(\w+) as/ then
-    _, action = $1, $2
-    puts action
-  when /Started (#{verbs}) \"([^"]+)\"/, /method=(#{verbs}) path="([^"]+)"/ then
-    verb, path = $1, $2
+ARGV.each do |path|
+  warn path
+  cmd = case path
+        when /\.gz$/ then
+          "gzcat"
+        when /\.bz2?$/ then
+          "bzcat"
+        else
+          "cat"
+        end
 
-    _, action = routes.find { |k,v| "#{verb} #{path}" =~ k }
+  IO.popen [cmd, path] do |io|
+    io.each_line do |line|
+      $stderr.print "." if $. % 10_000 == 0
+      case line
+      when /Processing by (\w+)#(\w+) as/ then
+        _, action = $1, $2
+        puts action
+      when /Started (#{verbs}) \"([^"]+)\"/, /method=(#{verbs}) path="([^"]+)"/ then
+        verb, path = $1, $2
 
-    puts action if action
-  else
-    # warn "unparsed: #{line.chomp}"
+        _, action = routes.find { |k,v| "#{verb} #{path}" =~ k }
+
+        puts action if action
+      else
+        # warn "unparsed: #{line.chomp}"
+      end
+    end
   end
 end
 
