@@ -34,7 +34,10 @@ File.foreach route do |line|
   end
 end
 
+warn "NOTE: No logs provided. Scanning stdin." if ARGV.empty?
+
 ARGF.each_line do |line|
+  $stderr.print "." if $. % 10_000 == 0
   case line
   when /Processing by (\w+)#(\w+) as/ then
     _, action = $1, $2
@@ -49,3 +52,5 @@ ARGF.each_line do |line|
     # warn "unparsed: #{line.chomp}"
   end
 end
+
+warn "done"
