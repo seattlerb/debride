@@ -213,6 +213,83 @@ class Debride < MethodBasedSexpProcessor
     super.to_s.sub(/^::|#/, "").to_sym
   end
 
+  def process_attrasgn(sexp)
+    method_name = sexp[2]
+    method_name = method_name.last if Sexp === method_name
+    called << method_name
+    process_until_empty sexp
+    sexp
+  end
+
+  def process_call sexp # :nodoc:
+    method_name = sexp[2]
+
+    case method_name
+    when :new then
+      method_name = :initialize
+    when :alias_method_chain then
+      # s(:call, nil, :alias_method_chain, s(:lit, :royale), s(:lit, :cheese))
+      _, _, _, (_, new_name), _ = sexp
+      known[new_name] << klass_name if option[:rails]
+    when :attr_accessor then
+      # s(:call, nil, :attr_accessor, s(:lit, :a1), ...)
+      _, _, _, *args = sexp
+      args.each do |(_, name)|
+        known[name] << klass_name
+        known["#{name}=".to_sym] << klass_name
+      end
+    when :attr_writer then
+      # s(:call, nil, :attr_writer, s(:lit, :w1), ...)
+      _, _, _, *args = sexp
+      args.each do |(_, name)|
+        known["#{name}=".to_sym] << klass_name
+      end
+    when :attr_reader then
+      # s(:call, nil, :attr_reader, s(:lit, :r1), ...)
+      _, _, _, *args = sexp
+      args.each do |(_, name)|
+        known[name] << klass_name
+      end
+    when :send, :public_send, :__send__ then
+      # s(:call, s(:const, :Seattle), :send, s(:lit, :raining?))
+      _, _, _, msg_arg, * = sexp
+      if Sexp === msg_arg && [:lit, :str].include?(msg_arg.sexp_type) then
+        called << msg_arg.last.to_sym
+      end
+     when *RAILS_VALIDATION_METHODS then
+       if option[:rails]
+         possible_hash = sexp.last
+         if Sexp === possible_hash && possible_hash.sexp_type == :hash
+           possible_hash.sexp_body.each_slice(2) do |key, val|
+             called << val.last        if val.first == :lit
+             called << val.last.to_sym if val.first == :str
+           end
+         end
+       end
+     when *RAILS_DSL_METHODS then
+       if option[:rails]
+         # s(:call, nil, :before_save, s(:lit, :save_callback), s(:hash, ...))
+         _, _, _, (_, new_name), possible_hash = sexp
+         called << new_name
+         if Sexp === possible_hash && possible_hash.sexp_type == :hash
+           possible_hash.sexp_body.each_slice(2) do |key, val|
+             next unless Sexp === val
+             called << val.last        if val.first == :lit
+             called << val.last.to_sym if val.first == :str
+           end
+         end
+       end
+    when /_path$/ then
+      method_name = method_name.to_s[0..-6].to_sym if option[:rails]
+    end
+
+    called << method_name
+
+    process_until_empty sexp
+
+    sexp
+  end
+
   def process_cdecl exp # :nodoc:
     _, name, val = exp
     process val
@@ -262,83 +339,6 @@ class Debride < MethodBasedSexpProcessor
       known[method_name] << klass_name
       process_until_empty sexp
     end
-  end
-
-  def process_call sexp # :nodoc:
-    method_name = sexp[2]
-
-    case method_name
-    when :new then
-      method_name = :initialize
-    when :alias_method_chain then
-      new_name = sexp[3]
-      new_name = new_name.last if Sexp === new_name # when is this NOT the case?
-      known[new_name] << klass_name if option[:rails]
-    when :attr_accessor then
-      sexp[3..-1].each do |name|
-        new_name = name # Antics to avoid warnings regarding shadow variable
-        new_name = new_name.last if Sexp === new_name # because alias_method_chain does it
-        known[new_name] << klass_name
-        known["#{new_name}=".to_sym] << klass_name
-      end
-    when :attr_writer then
-      sexp[3..-1].each do |name|
-        new_name = name # Antics to avoid warnings regarding shadow variable
-        new_name = new_name.last if Sexp === new_name # because alias_method_chain does it
-        known["#{new_name}=".to_sym] << klass_name
-      end
-    when :attr_reader then
-      sexp[3..-1].each do |name|
-        new_name = name # Antics to avoid warnings regarding shadow variable
-        new_name = new_name.last if Sexp === new_name # because alias_method_chain does it
-        known[new_name] << klass_name
-      end
-    when :send, :public_send, :__send__ then
-      sent_method = sexp[3]
-      if Sexp === sent_method && [:lit, :str].include?(sent_method.first)
-        called << sent_method.last.to_sym
-      end
-     when *RAILS_VALIDATION_METHODS then
-       if option[:rails]
-         possible_hash = sexp.last
-         if Sexp === possible_hash && possible_hash.first == :hash
-           possible_hash[1..-1].each_slice(2) do |key, val|
-             called << val.last        if val.first == :lit
-             called << val.last.to_sym if val.first == :str
-           end
-         end
-       end
-     when *RAILS_DSL_METHODS then
-       if option[:rails]
-         new_name = sexp[3]
-         new_name = new_name.last if Sexp === new_name # when is this NOT the case?
-         called << new_name
-         possible_hash = sexp.last
-         if Sexp === possible_hash && possible_hash.first == :hash
-           possible_hash[1..-1].each_slice(2) do |key, val|
-             next unless Sexp === val
-             called << val.last        if val.first == :lit
-             called << val.last.to_sym if val.first == :str
-           end
-         end
-       end
-    when /_path$/ then
-      method_name = method_name.to_s[0..-6].to_sym if option[:rails]
-    end
-
-    called << method_name
-
-    process_until_empty sexp
-
-    sexp
-  end
-
-  def process_attrasgn(sexp)
-    method_name = sexp[2]
-    method_name = method_name.last if Sexp === method_name
-    called << method_name
-    process_until_empty sexp
-    sexp
   end
 
   ##
