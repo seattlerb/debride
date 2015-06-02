@@ -274,6 +274,25 @@ class Debride < MethodBasedSexpProcessor
       new_name = sexp[3]
       new_name = new_name.last if Sexp === new_name # when is this NOT the case?
       known[new_name] << klass_name if option[:rails]
+    when :attr_accessor then
+      sexp[3..-1].each do |name|
+        new_name = name # Antics to avoid warnings regarding shadow variable
+        new_name = new_name.last if Sexp === new_name # because alias_method_chain does it
+        known[new_name] << klass_name
+        known["#{new_name}=".to_sym] << klass_name
+      end
+    when :attr_writer then
+      sexp[3..-1].each do |name|
+        new_name = name # Antics to avoid warnings regarding shadow variable
+        new_name = new_name.last if Sexp === new_name # because alias_method_chain does it
+        known["#{new_name}=".to_sym] << klass_name
+      end
+    when :attr_reader then
+      sexp[3..-1].each do |name|
+        new_name = name # Antics to avoid warnings regarding shadow variable
+        new_name = new_name.last if Sexp === new_name # because alias_method_chain does it
+        known[new_name] << klass_name
+      end
     when :send, :public_send, :__send__ then
       sent_method = sexp[3]
       if Sexp === sent_method && [:lit, :str].include?(sent_method.first)
@@ -311,6 +330,14 @@ class Debride < MethodBasedSexpProcessor
 
     process_until_empty sexp
 
+    sexp
+  end
+
+  def process_attrasgn(sexp)
+    method_name = sexp[2]
+    method_name = method_name.last if Sexp === method_name
+    called << method_name
+    process_until_empty sexp
     sexp
   end
 
