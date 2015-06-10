@@ -100,7 +100,7 @@ class Debride < MethodBasedSexpProcessor
 
   def process_rb path_or_io
     begin
-      warn "processing: #{path}" if option[:verbose]
+      warn "processing: #{path_or_io}" if option[:verbose]
 
       case path_or_io
       when String then
