@@ -23,6 +23,7 @@ class TestDebride < Minitest::Test
     debride.process debride.process_rb io
 
     assert_equal exp, debride.missing
+    debride
   end
 
   def test_sanity
@@ -35,7 +36,9 @@ class TestDebride < Minitest::Test
     end
 
     exp = [["Debride",
-            [:process_call, :process_defn, :process_defs, :process_rb, :report]]]
+            [:process_attrasgn, :process_call, :process_cdecl, :process_colon2,
+             :process_colon3, :process_const, :process_defn, :process_defs,
+             :process_rb, :report]]]
 
     assert_equal exp, debride.missing
   end
@@ -87,7 +90,9 @@ class TestDebride < Minitest::Test
     debride = Debride.run %w[--exclude test lib]
 
     exp = [["Debride",
-            [:process_call, :process_defn, :process_defs, :process_rb, :report]]]
+            [:process_attrasgn, :process_call, :process_cdecl, :process_colon2,
+             :process_colon3, :process_const, :process_defn, :process_defs,
+             :process_rb, :report]]]
 
     assert_equal exp, debride.missing
   end
@@ -262,7 +267,49 @@ class TestDebride < Minitest::Test
       object.a3 = 'Baz'
     RUBY
 
-    assert_process [["AttributeAccessor", [:a1=, :a2, :a3, :r2, :w2=]]], ruby
+    d = assert_process [["AttributeAccessor", [:a1=, :a2, :a3, :r2, :w2=]]], ruby
+
+    exp = {
+           "AttributeAccessor" => {
+                                   :a1         => "AttributeAccessor#a1",
+                                   :a1=        => "AttributeAccessor#a1=",
+                                   :a2         => "AttributeAccessor#a2",
+                                   :a2=        => "AttributeAccessor#a2=",
+                                   :a3         => "AttributeAccessor#a3",
+                                   :a3=        => "AttributeAccessor#a3=",
+                                   :w1=        => "AttributeAccessor#w1=",
+                                   :w2=        => "AttributeAccessor#w2=",
+                                   :r1         => "AttributeAccessor#r1",
+                                   :r2         => "AttributeAccessor#r2",
+                                   :initialize => "AttributeAccessor#initialize"
+                                  }
+          }
+
+    assert_equal exp, d.map
+
+    exp = {
+           "AttributeAccessor#a1"         => "(io):2",
+           "AttributeAccessor#a1="        => "(io):2",
+           "AttributeAccessor#a2"         => "(io):2",
+           "AttributeAccessor#a2="        => "(io):2",
+           "AttributeAccessor#a3"         => "(io):2",
+           "AttributeAccessor#a3="        => "(io):2",
+           "AttributeAccessor#w1="        => "(io):3",
+           "AttributeAccessor#w2="        => "(io):3",
+           "AttributeAccessor#r1"         => "(io):4",
+           "AttributeAccessor#r2"         => "(io):4",
+           "AttributeAccessor#initialize" => "(io):5",
+          }
+
+    assert_equal exp, d.method_locations
+
+    out, err = capture_io do
+      d.report
+    end
+
+    assert_match(/AttributeAccessor/, out)
+    assert_match(/a1=/, out)
+    assert_empty err
   end
 
   def test_attr_accessor_with_hash_default_value

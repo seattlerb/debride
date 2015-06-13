@@ -100,7 +100,7 @@ class Debride < MethodBasedSexpProcessor
 
   def process_rb path_or_io
     begin
-      warn "processing: #{path}" if option[:verbose]
+      warn "Processing ruby: #{path_or_io}" if option[:verbose]
 
       case path_or_io
       when String then
@@ -209,8 +209,8 @@ class Debride < MethodBasedSexpProcessor
     super.to_s
   end
 
-  def method_name # :nodoc:
-    super.to_s.sub(/^::|#/, "").to_sym
+  def plain_method_name # :nodoc:
+    method_name.to_s.sub(/^::|#/, "").to_sym
   end
 
   def process_attrasgn(sexp)
@@ -219,6 +219,13 @@ class Debride < MethodBasedSexpProcessor
     called << method_name
     process_until_empty sexp
     sexp
+  end
+
+  def record_method name, file, line
+    signature = "#{klass_name}##{name}"
+    method_locations[signature] = "#{file}:#{line}"
+    map[klass_name][name] = signature
+    known[name] << klass_name
   end
 
   def process_call sexp # :nodoc:
@@ -234,21 +241,24 @@ class Debride < MethodBasedSexpProcessor
     when :attr_accessor then
       # s(:call, nil, :attr_accessor, s(:lit, :a1), ...)
       _, _, _, *args = sexp
+      file, line = sexp.file, sexp.line
       args.each do |(_, name)|
-        known[name] << klass_name
-        known["#{name}=".to_sym] << klass_name
+        record_method name, file, line
+        record_method "#{name}=".to_sym, file, line
       end
     when :attr_writer then
       # s(:call, nil, :attr_writer, s(:lit, :w1), ...)
       _, _, _, *args = sexp
+      file, line = sexp.file, sexp.line
       args.each do |(_, name)|
-        known["#{name}=".to_sym] << klass_name
+        record_method "#{name}=".to_sym, file, line
       end
     when :attr_reader then
       # s(:call, nil, :attr_reader, s(:lit, :r1), ...)
       _, _, _, *args = sexp
+      file, line = sexp.file, sexp.line
       args.each do |(_, name)|
-        known[name] << klass_name
+        record_method name, file, line
       end
     when :send, :public_send, :__send__ then
       # s(:call, s(:const, :Seattle), :send, s(:lit, :raining?))
@@ -327,16 +337,16 @@ class Debride < MethodBasedSexpProcessor
 
   def process_defn sexp # :nodoc:
     super do
-      map[klass_name][method_name] = signature
-      known[method_name] << klass_name
+      map[klass_name][plain_method_name] = signature
+      known[plain_method_name] << klass_name
       process_until_empty sexp
     end
   end
 
   def process_defs sexp # :nodoc:
     super do
-      map[klass_name][method_name] = signature
-      known[method_name] << klass_name
+      map[klass_name][plain_method_name] = signature
+      known[plain_method_name] << klass_name
       process_until_empty sexp
     end
   end
