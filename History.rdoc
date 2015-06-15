@@ -1,3 +1,20 @@
+=== 1.5.0 / 2015-06-14
+
+* 6 minor enhancements:
+
+  * Added --focus <path> to filter report on focused path. (phiggins)
+  * Added debride_rails_whitelist to help generate emperical whitelists from logs.
+  * Added validate to rails methods. (jeremyf)
+  * Extended debride to understand attr_* methods. (jeremyf)
+  * Extended debride_rails_whitelist to be able to scan compressed logs (gzip/bzip)
+  * Improved output of debride_rails_whitelist so you know what's going on. (amerine)
+
+* 3 bug fixes:
+
+  * Fixed handling of uncalled attr_* methods in reports.
+  * Fixed improper recording of locations of consts and alias_method_chain.
+  * Fixed recording of method names.
+
 === 1.4.0 / 2015-05-27
 
 * 1 major enhancement:
