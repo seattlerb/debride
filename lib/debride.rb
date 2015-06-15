@@ -237,7 +237,10 @@ class Debride < MethodBasedSexpProcessor
     when :alias_method_chain then
       # s(:call, nil, :alias_method_chain, s(:lit, :royale), s(:lit, :cheese))
       _, _, _, (_, new_name), _ = sexp
-      known[new_name] << klass_name if option[:rails]
+      if option[:rails] then
+        file, line = sexp.file, sexp.line
+        record_method new_name, file, line
+      end
     when :attr_accessor then
       # s(:call, nil, :attr_accessor, s(:lit, :a1), ...)
       _, _, _, *args = sexp
@@ -304,8 +307,12 @@ class Debride < MethodBasedSexpProcessor
     _, name, val = exp
     process val
 
-    map[klass_name][name] = "#{klass_name}::#{name}"
+    signature = "#{klass_name}::#{name}"
+    map[klass_name][name] = signature
     known[name] << klass_name
+
+    file, line = exp.file, exp.line
+    method_locations[signature] = "#{file}:#{line}"
 
     exp
   end

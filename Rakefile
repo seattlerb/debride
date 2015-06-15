@@ -22,7 +22,7 @@ def run dir, wl
   abort "Specify dir to scan with D=<path>" unless dir
   wl = "--whitelist #{wl}" if wl
 
-  ruby "-Ilib:../../debride-erb/dev/lib bin/debride -v --rails #{dir} #{wl}"
+  ruby "-Ilib:../../debride-erb/dev/lib bin/debride --rails #{dir} #{wl}"
 end
 
 task :run do
