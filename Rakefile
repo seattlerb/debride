@@ -18,11 +18,12 @@ end
 def run dir, wl
   ENV["GEM_HOME"] = "tmp/isolate/ruby-2.0.0"
   ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate/ruby-2.0.0"
+  verbose = ENV["V"] ? "-v" : ""
 
   abort "Specify dir to scan with D=<path>" unless dir
   wl = "--whitelist #{wl}" if wl
 
-  ruby "-Ilib:../../debride-erb/dev/lib bin/debride --rails #{dir} #{wl}"
+  ruby "-Ilib:../../debride-erb/dev/lib bin/debride --rails #{verbose} #{dir} #{wl}"
 end
 
 task :run do
