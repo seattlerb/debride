@@ -19,7 +19,7 @@ end
 # A static code analyzer that points out possible dead methods.
 
 class Debride < MethodBasedSexpProcessor
-  VERSION = "1.5.0" # :nodoc:
+  VERSION = "1.5.1" # :nodoc:
   PROJECT = "debride"
 
   def self.expand_dirs_to_files *dirs # TODO: push back up to sexp_processor
