@@ -26,7 +26,7 @@ def run dir, wl
   ruby "-Ilib:../../debride-erb/dev/lib bin/debride --rails #{verbose} #{dir} #{wl}"
 end
 
-task :run do
+task :run => :isolate do
   run ENV["D"], ENV["W"]
 end
 
