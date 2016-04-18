@@ -47,7 +47,7 @@ class Debride < MethodBasedSexpProcessor
         begin
           load plugin
           @@plugins << plugin_name
-        rescue LoadError => e
+        rescue RuntimeError, LoadError => e
           warn "error loading #{plugin.inspect}: #{e.message}. skipping..."
         end
       end
@@ -55,7 +55,7 @@ class Debride < MethodBasedSexpProcessor
 
     @@plugins
   rescue
-    # ignore
+    []
   end
 
   def self.file_extensions
