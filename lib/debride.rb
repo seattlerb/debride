@@ -1,9 +1,11 @@
 #!/usr/bin/ruby -w
 
-require "ruby_parser"
-require "sexp_processor"
 require "optparse"
 require "set"
+
+require "ruby_parser"
+require "sexp_processor"
+require "path_expander"
 
 # :stopdoc:
 class File
@@ -70,8 +72,10 @@ class Debride < MethodBasedSexpProcessor
 
     debride = Debride.new opt
 
-    files = expand_dirs_to_files(args)
-    files -= expand_dirs_to_files(debride.option[:exclude]) if debride.option[:exclude]
+    expander = PathExpander.new(args, "**/*.rb")
+    files = expander.process
+    excl  = debride.option[:exclude]
+    files = expander.filter_files files, excl if excl
 
     debride.run(files)
     debride

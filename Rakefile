@@ -3,6 +3,13 @@
 require "rubygems"
 require "hoe"
 
+Hoe::add_include_dirs("../../sexp_processor/dev/lib",
+                      "../../ruby_parser/dev/lib",
+                      "../../ruby2ruby/dev/lib",
+                      "../../ZenTest/dev/lib",
+                      "../../path_expander/dev/lib",
+                      "lib")
+
 Hoe.plugin :isolate
 Hoe.plugin :seattlerb
 Hoe.plugin :rdoc
@@ -13,26 +20,36 @@ Hoe.spec "debride" do
 
   dependency "sexp_processor", "~> 4.5"
   dependency "ruby_parser", "~> 3.6"
+  dependency "path_expander",  "~> 1.0"
 end
 
-def run dir, wl
+def run dir, whitelist
+  abort "Specify dir to scan with D=<path>" unless dir
+
   ENV["GEM_HOME"] = "tmp/isolate/ruby-2.0.0"
   ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate/ruby-2.0.0"
-  verbose = ENV["V"] ? "-v" : ""
 
-  abort "Specify dir to scan with D=<path>" unless dir
-  wl = "--whitelist #{wl}" if wl
+  whitelist = whitelist && ["--whitelist", whitelist]
+  verbose   = ENV["V"]  && "-v"
 
-  ruby "-Ilib:../../debride-erb/dev/lib bin/debride --rails #{verbose} #{dir} #{wl}"
+  require "debride"
+
+  args = ["--rails", verbose, whitelist, dir].flatten.compact
+
+  Debride.run(args).report
 end
 
 task :run => :isolate do
   run ENV["D"], ENV["W"]
 end
 
-task :rails do
-  d = "~/Work/git/seattlerb.org"
-  run "#{d}/{app,lib,config}", "#{d}/whitelist.txt"
+task :rails => :isolate do
+  ENV["GEM_HOME"] = "tmp/isolate/ruby-2.0.0"
+  ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate/ruby-2.0.0"
+
+  d = File.expand_path "~/Work/git/seattlerb.org"
+
+  run d, "#{d}/whitelist.txt"
 end
 
 task :debug do
