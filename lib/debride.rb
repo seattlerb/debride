@@ -2,6 +2,7 @@
 
 require "optparse"
 require "set"
+require "stringio"
 
 require "ruby_parser"
 require "sexp_processor"
@@ -23,18 +24,6 @@ end
 class Debride < MethodBasedSexpProcessor
   VERSION = "1.5.1" # :nodoc:
   PROJECT = "debride"
-
-  def self.expand_dirs_to_files *dirs # TODO: push back up to sexp_processor
-    extensions = self.file_extensions
-
-    dirs.flatten.map { |p|
-      if File.directory? p then
-        Dir[File.join(p, "**", "*.{#{extensions.join(",")}}")]
-      else
-        p
-      end
-    }.flatten.map { |s| s.sub(/^\.\//, "") } # strip "./" from paths
-  end
 
   def self.load_plugins proj = PROJECT
     unless defined? @@plugins then
@@ -72,10 +61,12 @@ class Debride < MethodBasedSexpProcessor
 
     debride = Debride.new opt
 
-    expander = PathExpander.new(args, "**/*.rb")
+    extensions = self.file_extensions
+    glob = "**/*.{#{extensions.join(",")}}"
+    expander = PathExpander.new(args, glob)
     files = expander.process
     excl  = debride.option[:exclude]
-    files = expander.filter_files files, excl if excl
+    files = expander.filter_files files, StringIO.new(excl.join "\n") if excl
 
     debride.run(files)
     debride
