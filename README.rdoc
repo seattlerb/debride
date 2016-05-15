@@ -14,6 +14,10 @@ Analyze code for potentially uncalled / dead methods.
 * Whitelisting known good methods by name or regexp.
 * Use --rails for Rails-specific domain knowledge.
 * Use `debride_rails_whitelist` to generate an emperical whitelist from logs.
+* Uses path_expander, so you can use:
+  * dir_arg -- expand a directory automatically
+  * @file_of_args -- persist arguments in a file
+  * -path_to_subtract -- ignore intersecting subsets of files/directories
 
 == SYNOPSIS:
 
@@ -44,10 +48,13 @@ You can also use regexps in your whitelist by delimiting them with //'s.
 
 debride-erb  :: Extends debride to analyze erb files (via erubis ala rails).
 debride-haml :: Plugin to allow debride to parse Haml files.
+debride-curly :: A plugin for the Curly templating language
 
 == REQUIREMENTS:
 
-* ruby 1.8+
+* sexp_processor
+* ruby_parser
+* path_expander
 
 == INSTALL:
 
