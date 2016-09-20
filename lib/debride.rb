@@ -188,7 +188,6 @@ class Debride < MethodBasedSexpProcessor
   # Command-line options.
 
   attr_accessor :option
-  attr_accessor :map # :nodoc: # TODO: retire and use method_locations
 
   ##
   # Create a new Debride instance w/ +options+
@@ -197,7 +196,6 @@ class Debride < MethodBasedSexpProcessor
     self.option = { :whitelist => [] }.merge options
     self.known  = Hash.new { |h,k| h[k] = Set.new }
     self.called = Set.new
-    self.map    = Hash.new { |h,k| h[k] = {} }
     super()
   end
 
@@ -220,7 +218,6 @@ class Debride < MethodBasedSexpProcessor
   def record_method name, file, line
     signature = "#{klass_name}##{name}"
     method_locations[signature] = "#{file}:#{line}"
-    map[klass_name][name] = signature
     known[name] << klass_name
   end
 
@@ -304,7 +301,6 @@ class Debride < MethodBasedSexpProcessor
     process val
 
     signature = "#{klass_name}::#{name}"
-    map[klass_name][name] = signature
     known[name] << klass_name
 
     file, line = exp.file, exp.line
@@ -340,7 +336,6 @@ class Debride < MethodBasedSexpProcessor
 
   def process_defn sexp # :nodoc:
     super do
-      map[klass_name][plain_method_name] = signature
       known[plain_method_name] << klass_name
       process_until_empty sexp
     end
@@ -348,7 +343,6 @@ class Debride < MethodBasedSexpProcessor
 
   def process_defs sexp # :nodoc:
     super do
-      map[klass_name][plain_method_name] = signature
       known[plain_method_name] << klass_name
       process_until_empty sexp
     end
@@ -404,7 +398,7 @@ class Debride < MethodBasedSexpProcessor
 
     missing.each do |klass, meths|
       bad = meths.map { |meth|
-        location = method_locations[map[klass][meth]]
+        location = method_locations["#{klass}##{meth}"]
         path = location[/(.+):\d+$/, 1]
 
         next if focus and not File.fnmatch(focus, path)
