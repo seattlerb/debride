@@ -49,6 +49,7 @@ You can also use regexps in your whitelist by delimiting them with //'s.
 debride-erb  :: Extends debride to analyze erb files (via erubis ala rails).
 debride-haml :: Plugin to allow debride to parse Haml files.
 debride-curly :: A plugin for the Curly templating language
+debride-slim :: Extends debride to analyze Slim files
 
 == REQUIREMENTS:
 
