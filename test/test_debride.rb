@@ -270,24 +270,6 @@ class TestDebride < Minitest::Test
     d = assert_process [["AttributeAccessor", [:a1=, :a2, :a3, :r2, :w2=]]], ruby
 
     exp = {
-           "AttributeAccessor" => {
-                                   :a1         => "AttributeAccessor#a1",
-                                   :a1=        => "AttributeAccessor#a1=",
-                                   :a2         => "AttributeAccessor#a2",
-                                   :a2=        => "AttributeAccessor#a2=",
-                                   :a3         => "AttributeAccessor#a3",
-                                   :a3=        => "AttributeAccessor#a3=",
-                                   :w1=        => "AttributeAccessor#w1=",
-                                   :w2=        => "AttributeAccessor#w2=",
-                                   :r1         => "AttributeAccessor#r1",
-                                   :r2         => "AttributeAccessor#r2",
-                                   :initialize => "AttributeAccessor#initialize"
-                                  }
-          }
-
-    assert_equal exp, d.map
-
-    exp = {
            "AttributeAccessor#a1"         => "(io):2",
            "AttributeAccessor#a1="        => "(io):2",
            "AttributeAccessor#a2"         => "(io):2",
