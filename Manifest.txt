@@ -5,5 +5,6 @@ README.rdoc
 Rakefile
 bin/debride
 bin/debride_rails_whitelist
+bin/debride_rm
 lib/debride.rb
 test/test_debride.rb

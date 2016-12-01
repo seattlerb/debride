@@ -1,0 +1,96 @@
+#!/usr/bin/ruby -w
+
+def autoclave nuke
+  skips = 0
+
+  nuke.each do |path, ary|
+    # warn path
+
+    file = File.readlines path
+
+    ary.each do |(line, name)|
+      opener = file[line-1]
+
+      case opener
+      when /^\s*def/
+        # do nothing
+      else # attr_accessor, etc
+        # warn "  unsupported: #{opener.strip}"
+        skips += 1
+        next
+      end
+
+      leader = opener[/^\s+/]
+      end_line = file[line..-1].find_index { |l| l =~ /^#{leader}end/ }
+
+      if end_line then
+        end_line += line + 1
+        end_line += 1 while file[end_line] =~ /^\s*$/
+        end_line += 1 while file[end_line] =~ /^\s*alias.*?\b#{name}$/
+        end_line += 1 while file[end_line] =~ /^\s*$/
+
+        end_line.downto line do |i|
+          file.delete_at(i-1)
+        end
+      else
+        warn "NOT FOUND: ending for #{name} #{path}:#{line}"
+      end
+    end
+
+    File.open path, "w" do |f|
+      f.write file.join
+    end
+  end
+
+  print " skips = %3d" % skips if skips > 0
+end
+
+def read_debride path
+  nuke = Hash.new { |h,k| h[k] = [] }
+
+  count = 0
+
+  File.foreach path do |line|
+    case line
+    when /^  (\S+)\s+(\S+):(\d+)$/ then
+      name, path, line = $1, $2, $3.to_i
+      nuke[path] << [line, name]
+      count += 1
+    when /^[\w:]+$/, "\n", /:$/ then
+      # ignore
+    else
+      warn "unparsed: #{line.chomp}"
+    end
+  end
+
+  nuke.each do |k, ary|
+    nuke[k] = ary.sort.reverse
+  end
+
+  [nuke, count]
+end
+
+iter = 0
+old_count = nil
+
+abort "usage: #{$0} [debride args]+" if ARGV.empty? or ARGV.include? "-h"
+
+cmd = %w[debride] + ARGV + %w[> dummy_for_cmd_below]
+
+loop do
+  iter += 1
+  dead = "dead%02d.txt" % iter
+  cmd[-1] = dead
+
+  Process.wait Process.spawn cmd.join " "
+  abort "debride failed: #{$?}" unless $?.success?
+
+  nuke, count = read_debride dead
+
+  break if old_count == count
+  old_count = count
+
+  print "iter = %2d count = %4d" % [iter, count]
+  autoclave nuke
+  puts
+end

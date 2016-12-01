@@ -5,7 +5,7 @@ rdoc :: http://docs.seattlerb.org/debride
 
 == DESCRIPTION:
 
-Analyze code for potentially uncalled / dead methods.
+Analyze code for potentially uncalled / dead methods, now with auto-removal.
 
 == FEATURES/PROBLEMS:
 
@@ -13,6 +13,7 @@ Analyze code for potentially uncalled / dead methods.
 * As with all static analysis tools of dynamic languages, can't be 100%.
 * Whitelisting known good methods by name or regexp.
 * Use --rails for Rails-specific domain knowledge.
+* Use debride_rm to brazenly remove all unused methods. BE CAREFUL.
 * Use `debride_rails_whitelist` to generate an emperical whitelist from logs.
 * Uses path_expander, so you can use:
   * dir_arg -- expand a directory automatically
