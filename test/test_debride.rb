@@ -259,6 +259,10 @@ class TestDebride < Minitest::Test
           self.a2 = 'Bar'
           self.w1 = 'W'
         end
+
+        def self.class_method
+          puts "bazinga"
+        end
       end
 
       object = AttributeAccessor.new
@@ -267,7 +271,7 @@ class TestDebride < Minitest::Test
       object.a3 = 'Baz'
     RUBY
 
-    d = assert_process [["AttributeAccessor", [:a1=, :a2, :a3, :r2, :w2=]]], ruby
+    d = assert_process [["AttributeAccessor", [:a1=, :a2, :a3, :class_method, :r2, :w2=]]], ruby
 
     exp = {
            "AttributeAccessor#a1"         => "(io):2",
@@ -281,6 +285,7 @@ class TestDebride < Minitest::Test
            "AttributeAccessor#r1"         => "(io):4",
            "AttributeAccessor#r2"         => "(io):4",
            "AttributeAccessor#initialize" => "(io):5",
+           "AttributeAccessor::class_method" => "(io):10"
           }
 
     assert_equal exp, d.method_locations
