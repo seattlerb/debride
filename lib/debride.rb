@@ -399,6 +399,7 @@ class Debride < MethodBasedSexpProcessor
     missing.each do |klass, meths|
       bad = meths.map { |meth|
         location = method_locations["#{klass}##{meth}"]
+        location ||= method_locations["#{klass}::#{meth}"]
         path = location[/(.+):\d+$/, 1]
 
         next if focus and not File.fnmatch(focus, path)
