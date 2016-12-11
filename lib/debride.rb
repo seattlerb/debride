@@ -421,12 +421,16 @@ class Debride < MethodBasedSexpProcessor
     end
   end
 
+  ##
+  # Rails' macro-style methods that setup method calls to happen during a rails
+  # app's execution.
+
   RAILS_DSL_METHODS = [
     :after_action,
     :around_action,
     :before_action,
 
-    # http://api.rubyonrails.org/v4.2.1/classes/ActiveRecord/Callbacks.html
+    # http://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html
     :after_commit,
     :after_create,
     :after_destroy,
@@ -451,8 +455,12 @@ class Debride < MethodBasedSexpProcessor
     :validate,
   ]
 
-  # http://api.rubyonrails.org/v4.2.1/classes/ActiveModel/Validations/HelperMethods.html
+  ##
+  # Rails' macro-style methods that count as method calls if their options
+  # include +:if+ or +:unless+.
+
   RAILS_VALIDATION_METHODS = [
+    # http://api.rubyonrails.org/classes/ActiveModel/Validations/HelperMethods.html
     :validates,
     :validates_absence_of,
     :validates_acceptance_of,
@@ -465,6 +473,9 @@ class Debride < MethodBasedSexpProcessor
     :validates_presence_of,
     :validates_size_of,
   ]
+
+  ##
+  # Rails' macro-style methods that define methods dynamically.
 
   RAILS_MACRO_METHODS = [
     :belongs_to,
