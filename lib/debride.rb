@@ -285,6 +285,11 @@ class Debride < MethodBasedSexpProcessor
           end
         end
       end
+    when *RAILS_MACRO_METHODS
+      # s(:call, nil, :has_one, s(:lit, :has_one_relation), ...)
+      _, _, _, (_, name), * = sexp
+      file, line = sexp.file, sexp.line
+      record_method name, file, line
     when /_path$/ then
       method_name = method_name.to_s[0..-6].to_sym if option[:rails]
     end
@@ -459,5 +464,13 @@ class Debride < MethodBasedSexpProcessor
     :validates_numericality_of,
     :validates_presence_of,
     :validates_size_of,
+  ]
+
+  RAILS_MACRO_METHODS = [
+    :belongs_to,
+    :has_and_belongs_to_many,
+    :has_many,
+    :has_one,
+    :scope,
   ]
 end
