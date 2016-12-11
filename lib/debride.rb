@@ -262,21 +262,14 @@ class Debride < MethodBasedSexpProcessor
       if Sexp === msg_arg && [:lit, :str].include?(msg_arg.sexp_type) then
         called << msg_arg.last.to_sym
       end
-    when *RAILS_VALIDATION_METHODS then
-      if option[:rails]
-        possible_hash = sexp.last
-        if Sexp === possible_hash && possible_hash.sexp_type == :hash
-          possible_hash.sexp_body.each_slice(2) do |key, val|
-            called << val.last        if val.first == :lit
-            called << val.last.to_sym if val.first == :str
-          end
-        end
-      end
-    when *RAILS_DSL_METHODS then
+    when *RAILS_DSL_METHODS, *RAILS_VALIDATION_METHODS then
       if option[:rails]
         # s(:call, nil, :before_save, s(:lit, :save_callback), s(:hash, ...))
-        _, _, _, (_, new_name), possible_hash = sexp
-        called << new_name
+        if RAILS_DSL_METHODS.include?(method_name)
+          _, _, _, (_, new_name), * = sexp
+          called << new_name
+        end
+        possible_hash = sexp.last
         if Sexp === possible_hash && possible_hash.sexp_type == :hash
           possible_hash.sexp_body.each_slice(2) do |key, val|
             next unless Sexp === val
