@@ -223,6 +223,10 @@ class TestDebride < Minitest::Test
         after_save :save_callback, if: lambda {|r| true }
         validates :database_column, if: :validation_condition
         validate :some_validation_method
+
+        before_save do
+          foo.bar
+        end
       end
     RUBY
 

@@ -267,7 +267,7 @@ class Debride < MethodBasedSexpProcessor
         # s(:call, nil, :before_save, s(:lit, :save_callback), s(:hash, ...))
         if RAILS_DSL_METHODS.include?(method_name)
           _, _, _, (_, new_name), * = sexp
-          called << new_name
+          called << new_name if new_name
         end
         possible_hash = sexp.last
         if Sexp === possible_hash && possible_hash.sexp_type == :hash
