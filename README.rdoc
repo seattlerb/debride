@@ -52,6 +52,11 @@ debride-haml :: Plugin to allow debride to parse Haml files.
 debride-curly :: A plugin for the Curly templating language
 debride-slim :: Extends debride to analyze Slim files
 
+== EDITOR INTEGRATION:
+
+TextMate 2 :: * {Debride-Rails.tmbundle}[https://github.com/jjuliano/Debride-Rails.tmbundle] - Debride with Rails support 
+              * {Debride.tmbundle}[https://github.com/jjuliano/Debride-Rails.tmbundle] - Debride for Ruby
+
 == REQUIREMENTS:
 
 * sexp_processor
