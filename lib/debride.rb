@@ -262,29 +262,27 @@ class Debride < MethodBasedSexpProcessor
       if Sexp === msg_arg && [:lit, :str].include?(msg_arg.sexp_type) then
         called << msg_arg.last.to_sym
       end
-     when *RAILS_VALIDATION_METHODS then
-       if option[:rails]
-         possible_hash = sexp.last
-         if Sexp === possible_hash && possible_hash.sexp_type == :hash
-           possible_hash.sexp_body.each_slice(2) do |key, val|
-             called << val.last        if val.first == :lit
-             called << val.last.to_sym if val.first == :str
-           end
-         end
-       end
-     when *RAILS_DSL_METHODS then
-       if option[:rails]
-         # s(:call, nil, :before_save, s(:lit, :save_callback), s(:hash, ...))
-         _, _, _, (_, new_name), possible_hash = sexp
-         called << new_name
-         if Sexp === possible_hash && possible_hash.sexp_type == :hash
-           possible_hash.sexp_body.each_slice(2) do |key, val|
-             next unless Sexp === val
-             called << val.last        if val.first == :lit
-             called << val.last.to_sym if val.first == :str
-           end
-         end
-       end
+    when *RAILS_DSL_METHODS, *RAILS_VALIDATION_METHODS then
+      if option[:rails]
+        # s(:call, nil, :before_save, s(:lit, :save_callback), s(:hash, ...))
+        if RAILS_DSL_METHODS.include?(method_name)
+          _, _, _, (_, new_name), * = sexp
+          called << new_name if new_name
+        end
+        possible_hash = sexp.last
+        if Sexp === possible_hash && possible_hash.sexp_type == :hash
+          possible_hash.sexp_body.each_slice(2) do |key, val|
+            next unless Sexp === val
+            called << val.last        if val.first == :lit
+            called << val.last.to_sym if val.first == :str
+          end
+        end
+      end
+    when *RAILS_MACRO_METHODS
+      # s(:call, nil, :has_one, s(:lit, :has_one_relation), ...)
+      _, _, _, (_, name), * = sexp
+      file, line = sexp.file, sexp.line
+      record_method name, file, line
     when /_path$/ then
       method_name = method_name.to_s[0..-6].to_sym if option[:rails]
     end
@@ -416,12 +414,16 @@ class Debride < MethodBasedSexpProcessor
     end
   end
 
+  ##
+  # Rails' macro-style methods that setup method calls to happen during a rails
+  # app's execution.
+
   RAILS_DSL_METHODS = [
     :after_action,
     :around_action,
     :before_action,
 
-    # http://api.rubyonrails.org/v4.2.1/classes/ActiveRecord/Callbacks.html
+    # http://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html
     :after_commit,
     :after_create,
     :after_destroy,
@@ -446,8 +448,12 @@ class Debride < MethodBasedSexpProcessor
     :validate,
   ]
 
-  # http://api.rubyonrails.org/v4.2.1/classes/ActiveModel/Validations/HelperMethods.html
+  ##
+  # Rails' macro-style methods that count as method calls if their options
+  # include +:if+ or +:unless+.
+
   RAILS_VALIDATION_METHODS = [
+    # http://api.rubyonrails.org/classes/ActiveModel/Validations/HelperMethods.html
     :validates,
     :validates_absence_of,
     :validates_acceptance_of,
@@ -459,5 +465,16 @@ class Debride < MethodBasedSexpProcessor
     :validates_numericality_of,
     :validates_presence_of,
     :validates_size_of,
+  ]
+
+  ##
+  # Rails' macro-style methods that define methods dynamically.
+
+  RAILS_MACRO_METHODS = [
+    :belongs_to,
+    :has_and_belongs_to_many,
+    :has_many,
+    :has_one,
+    :scope,
   ]
 end

@@ -223,10 +223,55 @@ class TestDebride < Minitest::Test
         after_save :save_callback, if: lambda {|r| true }
         validates :database_column, if: :validation_condition
         validate :some_validation_method
+
+        before_save do
+          foo.bar
+        end
       end
     RUBY
 
     assert_process [], ruby, :rails => true
+  end
+
+  def test_rails_dsl_macro_definitions
+    ruby = <<-RUBY.strip
+      class RailsModel
+        has_one :has_one_relation
+        has_one :uncalled_has_one_relation
+        belongs_to :belongs_to_relation
+        belongs_to :uncalled_belongs_to_relation
+        has_many :has_many_relation
+        has_many :uncalled_has_many_relation
+        has_and_belongs_to_many :has_and_belongs_to_many_relation
+        has_and_belongs_to_many :uncalled_has_and_belongs_to_many_relation
+        scope :scope_method
+        scope :uncalled_scope_method
+
+        def instance_method_caller
+          has_one_relation
+          belongs_to_relation
+          has_many_relation
+          has_and_belongs_to_many_relation
+        end
+
+        def self.class_method_caller
+          scope_method
+        end
+
+        class_method_caller
+        new.instance_method_caller
+      end
+    RUBY
+
+    unused_methods = [
+      :uncalled_belongs_to_relation,
+      :uncalled_has_and_belongs_to_many_relation,
+      :uncalled_has_many_relation,
+      :uncalled_has_one_relation,
+      :uncalled_scope_method,
+    ]
+
+    assert_process [["RailsModel", unused_methods]], ruby, :rails => true
   end
 
   def test_constants
