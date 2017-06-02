@@ -120,7 +120,7 @@ class Debride < MethodBasedSexpProcessor
   # Parse command line options and return a hash of parsed option values.
 
   def self.parse_options args
-    options = {:whitelist => []}
+    options = {:whitelist => [], :formatter => 'Formatter::BaseFormatter'}
 
     op = OptionParser.new do |opts|
       opts.banner  = "debride [options] files_or_dirs"
@@ -159,6 +159,10 @@ class Debride < MethodBasedSexpProcessor
 
       opts.on("-v", "--verbose", "Verbose. Show progress processing files.") do
         options[:verbose] = true
+      end
+
+      opts.on("-f", "--format type", String, "Set formatter formatting log.") do |formatter|
+        options[:formatter] = 'Formatter::YamlFormatter' if ['yml', 'yaml'].include? formatter
       end
     end
 
@@ -393,25 +397,7 @@ class Debride < MethodBasedSexpProcessor
     end
 
     puts "These methods MIGHT not be called:"
-
-    missing.each do |klass, meths|
-      bad = meths.map { |meth|
-        location =
-          method_locations["#{klass}##{meth}"] ||
-          method_locations["#{klass}::#{meth}"]
-        path = location[/(.+):\d+$/, 1]
-
-        next if focus and not File.fnmatch(focus, path)
-
-        "  %-35s %s" % [meth, location]
-      }
-      bad.compact!
-      next if bad.empty?
-
-      puts
-      puts klass
-      puts bad.join "\n"
-    end
+    Object.const_get(option[:formatter]).do(missing, method_locations, focus)
   end
 
   ##
