@@ -50,7 +50,7 @@ class Debride < MethodBasedSexpProcessor
   end
 
   def self.file_extensions
-    %w[rb rake] + load_plugins
+    %w[rb rake jbuilder] + load_plugins
   end
 
   ##
