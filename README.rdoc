@@ -42,6 +42,21 @@ API), then you can whitelist it:
   MyClass
     bad_method                          lib/some/file.rb:20
   ...
+  
+Usage example for a typical rails application:
+  # dump rake routes into a file
+  % rake routes > routes.txt
+  # generate whitelist based on routes and usages from production log
+  % debride_rails_whitelist routes.txt log/production.log | sort -u > whitelist.txt
+  # add migration methods
+  % echo up >> whitelist.txt
+  % echo down >> whitelist.txt
+  % echo change >> whitelist.txt
+  # output debride report co standard output with the following options:
+  # ignore typical rails methods, 
+  # specify generated whitelist,
+  # run in current directory (".")
+  % debride --rails --whitelist whitelist.txt .
 
 You can also use regexps in your whitelist by delimiting them with //'s.
 
