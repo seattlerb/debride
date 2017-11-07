@@ -186,6 +186,26 @@ class TestDebride < Minitest::Test
     assert_process exp, ruby, :rails => true
   end
 
+  def test_cdecl_const2
+    ruby = <<-RUBY.strip
+      class Z
+        X::Y = 42
+      end
+    RUBY
+
+    assert_process [["Z", ["X::Y"]]], ruby
+  end
+
+  def test_cdecl_const3
+    ruby = <<-RUBY.strip
+      class Z
+        ::Y = 42
+      end
+    RUBY
+
+    assert_process [["Z", ["::Y"]]], ruby
+  end
+
   def test_method_send
     ruby = <<-RUBY.strip
       class Seattle

@@ -296,6 +296,9 @@ class Debride < MethodBasedSexpProcessor
 
   def process_cdecl exp # :nodoc:
     _, name, val = exp
+
+    name = name_to_string process name if Sexp === name
+
     process val
 
     signature = "#{klass_name}::#{name}"
@@ -305,6 +308,19 @@ class Debride < MethodBasedSexpProcessor
     method_locations[signature] = "#{file}:#{line}"
 
     exp
+  end
+
+  def name_to_string exp
+    case exp.sexp_type
+    when :colon2 then
+      _, (_, lhs), rhs = exp
+      "#{lhs}::#{rhs}"
+    when :colon3 then
+      _, rhs = exp
+      "::#{rhs}"
+    else
+      raise "Not handled: #{exp.inspect}"
+    end
   end
 
   def process_colon2 exp # :nodoc:
