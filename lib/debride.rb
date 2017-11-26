@@ -87,7 +87,7 @@ class Debride < MethodBasedSexpProcessor
 
       begin
         process send(msg, file)
-      rescue RuntimeError, SyntaxError => e
+      rescue RuntimeError, SyntaxError, RegexpError => e
         warn "  skipping #{file}: #{e.message}"
       end
     end
