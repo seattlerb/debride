@@ -108,7 +108,7 @@ class Debride < MethodBasedSexpProcessor
 
       rp = RubyParser.for_current_ruby rescue RubyParser.new
       rp.process(file, path, option[:timeout])
-    rescue Racc::ParseError => e
+    rescue Racc::ParseError, RegexpError => e
       warn "Parse Error parsing #{path}. Skipping."
       warn "  #{e.message}"
     rescue Timeout::Error
