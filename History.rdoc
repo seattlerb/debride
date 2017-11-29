@@ -1,3 +1,15 @@
+=== 1.8.1 / 2017-11-29
+
+* 2 minor enhancements:
+
+  * Add basic support for jbuilder files. (d-mato)
+  * Added rails & whitelist example to readme. (TheRusskiy)
+
+* 2 bug fixes:
+
+  * Capture RegexpError and skip file. (mrdShinse)
+  * Fixed reporting of cdecl+const2 (eg X::Y = 42). (herwinw)
+
 === 1.8.0 / 2017-05-09
 
 * 1 minor enhancement:
