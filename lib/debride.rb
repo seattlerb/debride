@@ -208,7 +208,7 @@ class Debride < MethodBasedSexpProcessor
   end
 
   def process_attrasgn(sexp)
-    method_name = sexp[2]
+    _, _, method_name, * = sexp
     method_name = method_name.last if Sexp === method_name
     called << method_name
     process_until_empty sexp
@@ -222,7 +222,7 @@ class Debride < MethodBasedSexpProcessor
   end
 
   def process_call sexp # :nodoc:
-    method_name = sexp[2]
+    _, _, method_name, * = sexp
 
     case method_name
     when :new then
@@ -273,8 +273,8 @@ class Debride < MethodBasedSexpProcessor
         if Sexp === possible_hash && possible_hash.sexp_type == :hash
           possible_hash.sexp_body.each_slice(2) do |key, val|
             next unless Sexp === val
-            called << val.last        if val.first == :lit
-            called << val.last.to_sym if val.first == :str
+            called << val.last        if val.sexp_type == :lit
+            called << val.last.to_sym if val.sexp_type == :str
           end
         end
       end
