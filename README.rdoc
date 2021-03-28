@@ -14,7 +14,7 @@ Analyze code for potentially uncalled / dead methods, now with auto-removal.
 * Whitelisting known good methods by name or regexp.
 * Use --rails for Rails-specific domain knowledge.
 * Use debride_rm to brazenly remove all unused methods. BE CAREFUL.
-* Use `debride_rails_whitelist` to generate an emperical whitelist from logs.
+* Use `debride_rails_whitelist` to generate an empirical whitelist from logs.
 * Uses path_expander, so you can use:
   * dir_arg -- expand a directory automatically
   * @file_of_args -- persist arguments in a file
