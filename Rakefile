@@ -26,8 +26,8 @@ end
 def run dir, whitelist
   abort "Specify dir to scan with D=<path>" unless dir
 
-  ENV["GEM_HOME"] = "tmp/isolate/ruby-2.0.0"
-  ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate/ruby-2.0.0"
+  ENV["GEM_HOME"] = "tmp/isolate"
+  ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate"
 
   whitelist = whitelist && ["--whitelist", whitelist]
   verbose   = ENV["V"]  && "-v"
