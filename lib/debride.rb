@@ -415,7 +415,7 @@ class Debride < MethodBasedSexpProcessor
         location =
           method_locations["#{klass}##{meth}"] ||
           method_locations["#{klass}::#{meth}"]
-        path = location[/(.+):\d+$/, 1]
+        path = location[/^(.+):/, 1]
 
         next if focus and not File.fnmatch(focus, path)
 
