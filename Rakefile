@@ -31,10 +31,11 @@ def run dir, whitelist
 
   whitelist = whitelist && ["--whitelist", whitelist]
   verbose   = ENV["V"]  && "-v"
+  exclude   = ENV["E"]  && ["--exclude", ENV["E"]]
 
   require "debride"
 
-  args = ["--rails", verbose, whitelist, dir].flatten.compact
+  args = ["--rails", verbose, whitelist, exclude, dir].flatten.compact
 
   Debride.run(args).report
 end

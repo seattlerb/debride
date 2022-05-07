@@ -27,8 +27,6 @@ class TestDebride < Minitest::Test
   end
 
   def test_sanity
-    skip "This is slow" unless ENV["SLOW"]
-
     debride = nil
 
     assert_silent do
@@ -85,9 +83,24 @@ class TestDebride < Minitest::Test
   end
 
   def test_exclude_files
-    skip "This is slow" unless ENV["SLOW"]
+    debride = Debride.run %w[--exclude test/ lib test]
 
-    debride = Debride.run %w[--exclude test lib]
+    exp = [["Debride",
+            [:process_attrasgn, :process_call, :process_cdecl, :process_colon2,
+             :process_colon3, :process_const, :process_defn, :process_defs,
+             :process_rb, :report]]]
+
+    assert_equal exp, debride.missing
+  end
+
+  def test_exclude_files__multiple
+    debride = Debride.run %w[--exclude test,lib lib test]
+
+    assert_empty debride.missing
+  end
+
+  def test_exclude_files__dir_without_slash
+    debride = Debride.run %w[--exclude test lib test]
 
     exp = [["Debride",
             [:process_attrasgn, :process_call, :process_cdecl, :process_colon2,
