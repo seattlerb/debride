@@ -402,22 +402,22 @@ class Debride < MethodBasedSexpProcessor
   ##
   # Print out a report of suspects.
 
-  def report
+  def report io = $stdout
     focus = option[:focus]
 
     if focus then
-      puts "Focusing on #{focus}"
-      puts
+      io.puts "Focusing on #{focus}"
+      io.puts
     end
 
-    puts "These methods MIGHT not be called:"
+    io.puts "These methods MIGHT not be called:"
 
     missing.each do |klass, meths|
       bad = meths.map { |meth|
         location =
           method_locations["#{klass}##{meth}"] ||
           method_locations["#{klass}::#{meth}"]
-        path = location[/(.+):\d+$/, 1]
+        path = location[/(.+):\d+/, 1]
 
         next if focus and not File.fnmatch(focus, path)
 
@@ -426,9 +426,9 @@ class Debride < MethodBasedSexpProcessor
       bad.compact!
       next if bad.empty?
 
-      puts
-      puts klass
-      puts bad.join "\n"
+      io.puts
+      io.puts klass
+      io.puts bad.join "\n"
     end
   end
 

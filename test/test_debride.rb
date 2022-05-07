@@ -110,6 +110,15 @@ class TestDebride < Minitest::Test
     assert_equal exp, debride.missing
   end
 
+  def test_focus
+    debride = Debride.run %w[--focus lib/debride.rb lib test]
+    io      = StringIO.new
+
+    debride.report(io)
+
+    assert_includes io.string, "Focusing on lib/debride.rb"
+  end
+
   def test_whitelist
     ruby = <<-RUBY
       class Seattle
