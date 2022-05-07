@@ -122,7 +122,10 @@ class Debride < MethodBasedSexpProcessor
   # Parse command line options and return a hash of parsed option values.
 
   def self.parse_options args
-    options = {:whitelist => []}
+    options = {
+      :whitelist => [],
+      :format => :text,
+    }
 
     op = OptionParser.new do |opts|
       opts.banner  = "debride [options] files_or_dirs"
@@ -161,6 +164,14 @@ class Debride < MethodBasedSexpProcessor
 
       opts.on("-v", "--verbose", "Verbose. Show progress processing files.") do
         options[:verbose] = true
+      end
+
+      opts.on "--json" do
+        options[:format] = :json
+      end
+
+      opts.on "--yaml" do
+        options[:format] = :yaml
       end
     end
 
@@ -399,12 +410,41 @@ class Debride < MethodBasedSexpProcessor
     by_class.sort_by { |k,v| k }
   end
 
+  def missing_locations
+    focus = option[:focus]
+
+    missing.map { |klass, meths|
+      bad = meths.map { |meth|
+        location =
+          method_locations["#{klass}##{meth}"] ||
+          method_locations["#{klass}::#{meth}"]
+
+        if focus then
+          path = location[/(.+):\d+/, 1]
+
+          next unless File.fnmatch(focus, path)
+        end
+
+        [meth, location]
+      }.compact
+
+      [klass, bad]
+    }
+      .to_h
+      .reject { |k,v| v.empty? }
+  end
+
   ##
   # Print out a report of suspects.
 
   def report io = $stdout
     focus = option[:focus]
+    type  = option[:format] || :text
 
+    send "report_#{type}", io, focus, missing_locations
+  end
+
+  def report_text io, focus, missing
     if focus then
       io.puts "Focusing on #{focus}"
       io.puts
@@ -413,23 +453,36 @@ class Debride < MethodBasedSexpProcessor
     io.puts "These methods MIGHT not be called:"
 
     missing.each do |klass, meths|
-      bad = meths.map { |meth|
-        location =
-          method_locations["#{klass}##{meth}"] ||
-          method_locations["#{klass}::#{meth}"]
-        path = location[/(.+):\d+/, 1]
-
-        next if focus and not File.fnmatch(focus, path)
-
-        "  %-35s %s" % [meth, location]
-      }
-      bad.compact!
-      next if bad.empty?
+      bad = meths.map { |(meth, location)| "  %-35s %s" % [meth, location] }
 
       io.puts
       io.puts klass
       io.puts bad.join "\n"
     end
+  end
+
+  def report_json io, focus, missing
+    require "json"
+
+    data = {
+      :missing => missing
+    }
+
+    data[:focus] = focus if focus
+
+    JSON.dump data, io
+  end
+
+  def report_yaml io, focus, missing
+    require "yaml"
+
+    data = {
+      :missing => missing
+    }
+
+    data[:focus] = focus if focus
+
+    YAML.dump data, io
   end
 
   ##

@@ -19,12 +19,20 @@ class TestDebride < Minitest::Test
                 :process_defs,
                 :process_rb,
                 :report,
-               ]]]
+                :report_json,
+                :report_text,
+                :report_yaml]]]
+
+  formatted_vals = EXP_LIST.map { |k,vs|
+    [k, vs.map { |v| [v, "lib/debride.rb:###"] } ]
+  }.to_h
+
+  EXP_FORMATTED = { :missing => formatted_vals }
 
   def assert_option arg, exp_arg, exp_opt
     opt = SafeDebride.parse_options arg
 
-    exp_opt = {:whitelist => []}.merge exp_opt
+    exp_opt = {:whitelist => [], :format => :text}.merge exp_opt
     assert_equal exp_opt, opt
     assert_equal exp_arg, arg
   end
@@ -115,6 +123,39 @@ class TestDebride < Minitest::Test
     debride.report(io)
 
     assert_includes io.string, "Focusing on lib/debride.rb"
+  end
+
+  def test_format__plain
+    debride = Debride.run %w[lib]
+    io      = StringIO.new
+
+    debride.report(io)
+
+    assert_match %r%process_attrasgn\s+lib/debride.rb:\d+-\d+%, io.string
+  end
+
+  def test_format__json
+    debride = Debride.run %w[lib --json]
+    io      = StringIO.new
+
+    debride.report(io)
+
+    exp  = JSON.load JSON.dump EXP_FORMATTED # force stringify
+    data = JSON.load io.string.gsub(/\d+-\d+/, "###")
+
+    assert_equal exp, data
+  end
+
+  def test_format__yaml
+    debride = Debride.run %w[lib --yaml]
+    io      = StringIO.new
+
+    debride.report(io)
+
+    exp  = EXP_FORMATTED
+    data = YAML.load io.string.gsub(/\d+-\d+/, "###")
+
+    assert_equal exp, data
   end
 
   def test_whitelist
