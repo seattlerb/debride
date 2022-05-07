@@ -8,6 +8,19 @@ class SafeDebride < Debride
 end
 
 class TestDebride < Minitest::Test
+  EXP_LIST = [["Debride",
+               [:process_attrasgn,
+                :process_call,
+                :process_cdecl,
+                :process_colon2,
+                :process_colon3,
+                :process_const,
+                :process_defn,
+                :process_defs,
+                :process_rb,
+                :report,
+               ]]]
+
   def assert_option arg, exp_arg, exp_opt
     opt = SafeDebride.parse_options arg
 
@@ -33,12 +46,7 @@ class TestDebride < Minitest::Test
       debride = Debride.run %w[lib]
     end
 
-    exp = [["Debride",
-            [:process_attrasgn, :process_call, :process_cdecl, :process_colon2,
-             :process_colon3, :process_const, :process_defn, :process_defs,
-             :process_rb, :report]]]
-
-    assert_equal exp, debride.missing
+    assert_equal EXP_LIST, debride.missing
   end
 
   def test_parse_options
@@ -85,12 +93,7 @@ class TestDebride < Minitest::Test
   def test_exclude_files
     debride = Debride.run %w[--exclude test/ lib test]
 
-    exp = [["Debride",
-            [:process_attrasgn, :process_call, :process_cdecl, :process_colon2,
-             :process_colon3, :process_const, :process_defn, :process_defs,
-             :process_rb, :report]]]
-
-    assert_equal exp, debride.missing
+    assert_equal EXP_LIST, debride.missing
   end
 
   def test_exclude_files__multiple
@@ -102,12 +105,7 @@ class TestDebride < Minitest::Test
   def test_exclude_files__dir_without_slash
     debride = Debride.run %w[--exclude test lib test]
 
-    exp = [["Debride",
-            [:process_attrasgn, :process_call, :process_cdecl, :process_colon2,
-             :process_colon3, :process_const, :process_defn, :process_defs,
-             :process_rb, :report]]]
-
-    assert_equal exp, debride.missing
+    assert_equal EXP_LIST, debride.missing
   end
 
   def test_focus
