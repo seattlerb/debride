@@ -8,16 +8,6 @@ require "ruby_parser"
 require "sexp_processor"
 require "path_expander"
 
-# :stopdoc:
-class File
-  RUBY19 = "<3".respond_to? :encoding unless defined? RUBY19 # :nodoc:
-
-  class << self
-    alias :binread :read unless RUBY19
-  end
-end
-# :startdoc:
-
 ##
 # A static code analyzer that points out possible dead methods.
 
@@ -96,26 +86,24 @@ class Debride < MethodBasedSexpProcessor
   end
 
   def process_rb path_or_io
-    begin
-      warn "Processing ruby: #{path_or_io}" if option[:verbose]
+    warn "Processing ruby: #{path_or_io}" if option[:verbose]
 
-      case path_or_io
-      when String then
-        path, file = path_or_io, File.binread(path_or_io)
-      when IO, StringIO then
-        path, file = "(io)", path_or_io.read
-      else
-        raise "Unhandled type: #{path_or_io.class}:#{path_or_io.inspect}"
-      end
-
-      rp = RubyParser.for_current_ruby rescue RubyParser.new
-      rp.process(file, path, option[:timeout])
-    rescue Racc::ParseError, RegexpError => e
-      warn "Parse Error parsing #{path}. Skipping."
-      warn "  #{e.message}"
-    rescue Timeout::Error
-      warn "TIMEOUT parsing #{path}. Skipping."
+    case path_or_io
+    when String then
+      path, file = path_or_io, File.binread(path_or_io)
+    when IO, StringIO then
+      path, file = "(io)", path_or_io.read
+    else
+      raise "Unhandled type: #{path_or_io.class}:#{path_or_io.inspect}"
     end
+
+    rp = RubyParser.for_current_ruby rescue RubyParser.new
+    rp.process(file, path, option[:timeout])
+  rescue Racc::ParseError, RegexpError => e
+    warn "Parse Error parsing #{path}. Skipping."
+    warn "  #{e.message}"
+  rescue Timeout::Error
+    warn "TIMEOUT parsing #{path}. Skipping."
   end
 
   ##
