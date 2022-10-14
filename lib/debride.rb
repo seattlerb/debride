@@ -150,6 +150,10 @@ class Debride < MethodBasedSexpProcessor
         options[:rails] = true
       end
 
+      opts.on("-m", "--minimum N", Integer, "Don't show hits less than N locs.") do |n|
+        options[:minimum] = n
+      end
+
       opts.on("-v", "--verbose", "Verbose. Show progress processing files.") do
         options[:verbose] = true
       end
@@ -240,6 +244,10 @@ class Debride < MethodBasedSexpProcessor
       _, _, _, *args = sexp
       file, line = sexp.file, sexp.line
       args.each do |(_, name)|
+        if Sexp === name then
+          process name
+          next
+        end
         record_method name, file, line
         record_method "#{name}=".to_sym, file, line
       end
@@ -248,6 +256,10 @@ class Debride < MethodBasedSexpProcessor
       _, _, _, *args = sexp
       file, line = sexp.file, sexp.line
       args.each do |(_, name)|
+        if Sexp === name then
+          process name
+          next
+        end
         record_method "#{name}=".to_sym, file, line
       end
     when :attr_reader then
@@ -255,6 +267,10 @@ class Debride < MethodBasedSexpProcessor
       _, _, _, *args = sexp
       file, line = sexp.file, sexp.line
       args.each do |(_, name)|
+        if Sexp === name then
+          process name
+          next
+        end
         record_method name, file, line
       end
     when :send, :public_send, :__send__ then
@@ -262,6 +278,18 @@ class Debride < MethodBasedSexpProcessor
       _, _, _, msg_arg, * = sexp
       if Sexp === msg_arg && [:lit, :str].include?(msg_arg.sexp_type) then
         called << msg_arg.last.to_sym
+      end
+    when :delegate then
+      # s(:call, nil, :delegate, ..., s(:hash, s(:lit, :to), s(:lit, :delegator)))
+      possible_hash = sexp.last
+      if Sexp === possible_hash && possible_hash.sexp_type == :hash
+        possible_hash.sexp_body.each_slice(2) do |key, val|
+          next unless key == s(:lit, :to)
+          next unless Sexp === val
+
+          called << val.last        if val.sexp_type == :lit
+          called << val.last.to_sym if val.sexp_type == :str
+        end
       end
     when *RAILS_DSL_METHODS, *RAILS_VALIDATION_METHODS then
       if option[:rails]
@@ -282,10 +310,16 @@ class Debride < MethodBasedSexpProcessor
     when *RAILS_MACRO_METHODS
       # s(:call, nil, :has_one, s(:lit, :has_one_relation), ...)
       _, _, _, (_, name), * = sexp
-      file, line = sexp.file, sexp.line
-      record_method name, file, line
+
+      # try to detect route scope vs model scope
+      if context.include? :module or context.include? :class then
+        file, line = sexp.file, sexp.line
+        record_method name, file, line
+      end
     when /_path$/ then
-      method_name = method_name.to_s[0..-6].to_sym if option[:rails]
+      method_name = method_name.to_s.delete_suffix("_path").to_sym if option[:rails]
+    when /^deliver_/ then
+      method_name = method_name.to_s.delete_prefix("deliver_").to_sym if option[:rails]
     end
 
     called << method_name
@@ -303,6 +337,7 @@ class Debride < MethodBasedSexpProcessor
     process val
 
     signature = "#{klass_name}::#{name}"
+
     known[name] << klass_name
 
     file, line = exp.file, exp.line
@@ -313,12 +348,16 @@ class Debride < MethodBasedSexpProcessor
 
   def name_to_string exp
     case exp.sexp_type
+    when :const then
+      exp.last.to_s
     when :colon2 then
-      _, (_, lhs), rhs = exp
-      "#{lhs}::#{rhs}"
+      _, lhs, rhs = exp
+      "#{name_to_string lhs}::#{rhs}"
     when :colon3 then
       _, rhs = exp
       "::#{rhs}"
+    when :self then # wtf?
+      "self"
     else
       raise "Not handled: #{exp.inspect}"
     end
@@ -440,13 +479,33 @@ class Debride < MethodBasedSexpProcessor
 
     io.puts "These methods MIGHT not be called:"
 
+    total = 0
+
     missing.each do |klass, meths|
-      bad = meths.map { |(meth, location)| "  %-35s %s" % [meth, location] }
+      bad = meths.map { |(meth, location)|
+        loc = if location then
+                l0, l1 = location.split(/:/).last.scan(/\d+/).flatten.map(&:to_i)
+                l1 ||= l0
+                l1 - l0 + 1
+              else
+                1
+              end
+
+        next if option[:minimum] && loc < option[:minimum]
+
+        total += loc
+
+        "  %-35s %s (%d)" % [meth, location, loc]
+      }.compact
+
+      next if bad.empty?
 
       io.puts
       io.puts klass
       io.puts bad.join "\n"
     end
+    io.puts
+    io.puts "Total suspect LOC: %d" % [total]
   end
 
   def report_json io, focus, missing

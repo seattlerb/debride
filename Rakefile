@@ -32,10 +32,11 @@ def run dir, whitelist
   whitelist = whitelist && ["--whitelist", whitelist]
   verbose   = ENV["V"]  && "-v"
   exclude   = ENV["E"]  && ["--exclude", ENV["E"]]
+  minimum   = ENV["M"]  && ["--minimum", ENV["M"]]
 
   require "debride"
 
-  args = ["--rails", verbose, whitelist, exclude, dir].flatten.compact
+  args = ["--rails", verbose, minimum, whitelist, exclude, dir].flatten.compact
 
   Debride.run(args).report
 end
