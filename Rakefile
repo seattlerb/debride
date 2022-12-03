@@ -13,6 +13,7 @@ Hoe::add_include_dirs("../../sexp_processor/dev/lib",
 Hoe.plugin :isolate
 Hoe.plugin :seattlerb
 Hoe.plugin :rdoc
+Hoe.plugin :cov
 
 Hoe.spec "debride" do
   developer "Ryan Davis", "ryand-ruby@zenspider.com"
