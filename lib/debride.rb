@@ -12,7 +12,7 @@ require "path_expander"
 # A static code analyzer that points out possible dead methods.
 
 class Debride < MethodBasedSexpProcessor
-  VERSION = "1.9.0" # :nodoc:
+  VERSION = "1.10.1" # :nodoc:
   PROJECT = "debride"
 
   def self.load_plugins proj = PROJECT

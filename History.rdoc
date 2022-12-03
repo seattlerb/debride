@@ -1,3 +1,22 @@
+=== 1.10.1 / 2022-12-03
+
+* 4 minor enhancements:
+
+  * Added --minimum <Nloc> flag to filter out smaller suspects.
+  * Added line count to suspects in report and total line count to end of report.
+  * Added processing of `delegate xs to: target` as a call to target.
+  * Added processing of rails deliver_X -> X calls.
+
+* 3 bug fixes:
+
+  * Fixed processing of colon2 (X::Y::Z) names.
+  * Fixed processing of var splatted attr_* methods.
+  * Possibly fixed conflation between rails route scopes and model scopes.
+
+=== 1.10.0 / 2022-12-03
+
+* See above... something went wrong with the release process.
+
 === 1.9.0 / 2022-05-23
 
 * 3 minor enhancements:
