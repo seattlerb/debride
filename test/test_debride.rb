@@ -301,6 +301,20 @@ class TestDebride < Minitest::Test
     assert_process [], ruby
   end
 
+  def test_method_block_shorthand
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
+
+      [Seattle].each(&:raining?)
+    RUBY
+
+    assert_process [], ruby
+  end
+
   def test_safe_navigation_operator
     ruby = <<-RUBY.strip
       class Seattle

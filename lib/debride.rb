@@ -335,6 +335,16 @@ class Debride < MethodBasedSexpProcessor
       method_name = method_name.to_s.delete_prefix("deliver_").to_sym if option[:rails]
     end
 
+    # check if the call has a block shorthand argument, etc. E.g. for `.each(&:empty?)`, `empty?` is called
+    sexp.each do |arg|
+      next unless Sexp === arg
+      next unless arg.sexp_type == :block_pass
+      _, block = arg
+      next unless Sexp === block
+      next unless block.sexp_type == :lit
+      called << block.last
+    end
+
     called << method_name
 
     process_until_empty sexp
