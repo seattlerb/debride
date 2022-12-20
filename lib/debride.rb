@@ -277,7 +277,7 @@ class Debride < MethodBasedSexpProcessor
         end
         record_method name, file, line
       end
-    when :send, :public_send, :__send__ then
+    when :send, :public_send, :__send__, :try then
       # s(:call, s(:const, :Seattle), :send, s(:lit, :raining?))
       _, _, _, msg_arg, * = sexp
       if Sexp === msg_arg && [:lit, :str].include?(msg_arg.sexp_type) then
