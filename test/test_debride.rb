@@ -314,6 +314,24 @@ class TestDebride < Minitest::Test
     assert_process [], ruby, :rails => true
   end
 
+  def test_graphql_dsl_methods
+    ruby = <<-RUBY.strip
+      class Thing
+        def id = 1
+        def name = 1
+      end
+
+      module GraphQL
+        class ThingObject < GraphQL::Schema::Object
+          field :id, ID, null: false
+          field :name, String, null: true
+        end
+      end
+    RUBY
+
+    assert_process [], ruby, :graphql => true
+  end
+
   def test_rails_dsl_macro_definitions
     ruby = <<-RUBY.strip
       class RailsModel

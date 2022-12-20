@@ -150,6 +150,10 @@ class Debride < MethodBasedSexpProcessor
         options[:rails] = true
       end
 
+      opts.on("-r", "--graphql", "Add some graphql-ruby call conversions.") do
+        options[:graphql] = true
+      end
+
       opts.on("-m", "--minimum N", Integer, "Don't show hits less than N locs.") do |n|
         options[:minimum] = n
       end
@@ -315,6 +319,15 @@ class Debride < MethodBasedSexpProcessor
       if context.include? :module or context.include? :class then
         file, line = sexp.file, sexp.line
         record_method name, file, line
+      end
+    when *GRAPHQL_OBJECT_METHODS then
+      if option[:graphql]
+        # s(:call, nil, :field, s(:lit, :field_name), ...)
+        _, _, _, (_, name), * = sexp
+
+        if context.include? :module or context.include? :class then
+          method_name = name
+        end
       end
     when /_path$/ then
       method_name = method_name.to_s.delete_suffix("_path").to_sym if option[:rails]
@@ -594,5 +607,12 @@ class Debride < MethodBasedSexpProcessor
     :has_many,
     :has_one,
     :scope,
+  ]
+
+  ##
+  # GraphQL defining a field means that a method is used to resolve a field in the schema.
+
+  GRAPHQL_OBJECT_METHODS = [
+    :field,
   ]
 end
