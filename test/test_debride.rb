@@ -17,6 +17,7 @@ class TestDebride < Minitest::Test
                 :process_const,
                 :process_defn,
                 :process_defs,
+                :process_op_asgn2,
                 :process_rb,
                 :report,
                 :report_json,
@@ -457,11 +458,13 @@ class TestDebride < Minitest::Test
     ruby = <<-RUBY.strip
       class AttributeAccessor
         attr_accessor :a1, :a2, :a3
-        attr_writer :w1, :w2
+        attr_writer :w1, :w2, :w3, :w4
         attr_reader :r1, :r2
         def initialize
           self.a2 = 'Bar'
           self.w1 = 'W'
+          self.w3 ||= 'W3'
+          self.w4 &&= 'W4'
         end
 
         def self.class_method
@@ -486,10 +489,12 @@ class TestDebride < Minitest::Test
            "AttributeAccessor#a3="        => "(io):2",
            "AttributeAccessor#w1="        => "(io):3",
            "AttributeAccessor#w2="        => "(io):3",
+           "AttributeAccessor#w3="        => "(io):3",
+           "AttributeAccessor#w4="        => "(io):3",
            "AttributeAccessor#r1"         => "(io):4",
            "AttributeAccessor#r2"         => "(io):4",
-           "AttributeAccessor#initialize" => "(io):5-7",
-           "AttributeAccessor::class_method" => "(io):10-11"
+           "AttributeAccessor#initialize" => "(io):5-9",
+           "AttributeAccessor::class_method" => "(io):12-13"
           }
 
     assert_equal exp, d.method_locations

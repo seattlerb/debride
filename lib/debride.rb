@@ -224,6 +224,14 @@ class Debride < MethodBasedSexpProcessor
     sexp
   end
 
+  # handle &&=, ||=, etc
+  def process_op_asgn2(sexp)
+    _, _, method_name, * = sexp
+    called << method_name
+    process_until_empty sexp
+    sexp
+  end
+
   def record_method name, file, line
     signature = "#{klass_name}##{name}"
     method_locations[signature] = "#{file}:#{line}"
