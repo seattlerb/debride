@@ -415,6 +415,8 @@ class Debride < MethodBasedSexpProcessor
     end
   end
 
+  alias process_safe_call process_call
+
   ##
   # Calculate the difference between known methods and called methods.
 

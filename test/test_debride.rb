@@ -287,6 +287,20 @@ class TestDebride < Minitest::Test
     assert_process [], ruby
   end
 
+  def test_safe_navigation_operator
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
+
+      Seattle&.raining?
+    RUBY
+
+    assert_process [], ruby
+  end
+
   def test_rails_dsl_methods
     ruby = <<-RUBY.strip
       class RailsThing
