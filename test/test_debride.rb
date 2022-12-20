@@ -329,6 +329,24 @@ class TestDebride < Minitest::Test
     assert_process [], ruby
   end
 
+  def test_method_with_symbol_to_proc
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+
+        def self.raining_still?
+          method(:raining?).to_proc.call
+        end
+      end
+
+      Seattle.raining_still?
+    RUBY
+
+    assert_process [], ruby
+  end
+
   def test_rails_dsl_methods
     ruby = <<-RUBY.strip
       class RailsThing
