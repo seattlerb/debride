@@ -439,6 +439,8 @@ class TestDebride < Minitest::Test
       class Constants
         USED = 42
         ALSO = 314
+        AGAIN = 27
+        MORE = 72
         UNUSED = 24
 
         def something
@@ -449,6 +451,8 @@ class TestDebride < Minitest::Test
       something
       Constants::ALSO
       ::Constants::ALSO
+      Constants.const_get(:AGAIN)
+      ::Constants.const_get("MORE")
     RUBY
 
     assert_process [["Constants", [:UNUSED]]], ruby
