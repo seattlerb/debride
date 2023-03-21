@@ -10,6 +10,7 @@ end
 class TestDebride < Minitest::Test
   EXP_LIST = [["Debride",
                [:process_attrasgn,
+                :process_block_pass,
                 :process_call,
                 :process_cdecl,
                 :process_colon2,
@@ -17,6 +18,7 @@ class TestDebride < Minitest::Test
                 :process_const,
                 :process_defn,
                 :process_defs,
+                :process_op_asgn2,
                 :process_rb,
                 :report,
                 :report_json,
@@ -287,6 +289,83 @@ class TestDebride < Minitest::Test
     assert_process [], ruby
   end
 
+  def test_method_try
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
+
+      Seattle.try :raining?
+    RUBY
+
+    assert_process [], ruby
+  end
+
+  def test_block_pass
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
+
+      [Seattle].each(&:raining?)
+    RUBY
+
+    assert_process [], ruby
+  end
+
+  def test_block_pass_other
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          -> { called }
+        end
+
+        def self.uncalled; end
+        def self.called; end
+      end
+
+      f(&Seattle.raining?)
+    RUBY
+
+    assert_process [["Seattle", [:uncalled]]], ruby
+  end
+
+  def test_safe_navigation_operator
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+      end
+
+      Seattle&.raining?
+    RUBY
+
+    assert_process [], ruby
+  end
+
+  def test_call_method
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.raining?
+          true
+        end
+
+        def self.raining_still?
+          method(:raining?)
+        end
+      end
+
+      Seattle.raining_still?
+    RUBY
+
+    assert_process [], ruby
+  end
+
   def test_rails_dsl_methods
     ruby = <<-RUBY.strip
       class RailsThing
@@ -360,6 +439,8 @@ class TestDebride < Minitest::Test
       class Constants
         USED = 42
         ALSO = 314
+        AGAIN = 27
+        MORE = 72
         UNUSED = 24
 
         def something
@@ -370,6 +451,8 @@ class TestDebride < Minitest::Test
       something
       Constants::ALSO
       ::Constants::ALSO
+      Constants.const_get(:AGAIN)
+      ::Constants.const_get("MORE")
     RUBY
 
     assert_process [["Constants", [:UNUSED]]], ruby
@@ -379,11 +462,13 @@ class TestDebride < Minitest::Test
     ruby = <<-RUBY.strip
       class AttributeAccessor
         attr_accessor :a1, :a2, :a3
-        attr_writer :w1, :w2
+        attr_writer :w1, :w2, :w3, :w4
         attr_reader :r1, :r2
         def initialize
           self.a2 = 'Bar'
           self.w1 = 'W'
+          self.w3 ||= 'W3'
+          self.w4 &&= 'W4'
         end
 
         def self.class_method
@@ -397,7 +482,10 @@ class TestDebride < Minitest::Test
       object.a3 = 'Baz'
     RUBY
 
-    d = assert_process [["AttributeAccessor", [:a1=, :a2, :a3, :class_method, :r2, :w2=]]], ruby
+    exp = [["AttributeAccessor",
+            [:a1=, :a2, :a3, :class_method, :r2, :w2=]]]
+
+    d = assert_process exp, ruby
 
     exp = {
            "AttributeAccessor#a1"         => "(io):2",
@@ -408,10 +496,12 @@ class TestDebride < Minitest::Test
            "AttributeAccessor#a3="        => "(io):2",
            "AttributeAccessor#w1="        => "(io):3",
            "AttributeAccessor#w2="        => "(io):3",
+           "AttributeAccessor#w3="        => "(io):3",
+           "AttributeAccessor#w4="        => "(io):3",
            "AttributeAccessor#r1"         => "(io):4",
            "AttributeAccessor#r2"         => "(io):4",
-           "AttributeAccessor#initialize" => "(io):5-7",
-           "AttributeAccessor::class_method" => "(io):10-11"
+           "AttributeAccessor#initialize" => "(io):5-9",
+           "AttributeAccessor::class_method" => "(io):12-13"
           }
 
     assert_equal exp, d.method_locations

@@ -220,6 +220,14 @@ class Debride < MethodBasedSexpProcessor
     sexp
   end
 
+  # handle &&=, ||=, etc
+  def process_op_asgn2(sexp)
+    _, _, method_name, * = sexp
+    called << method_name
+    process_until_empty sexp
+    sexp
+  end
+
   def record_method name, file, line
     signature = "#{klass_name}##{name}"
     method_locations[signature] = "#{file}:#{line}"
@@ -273,12 +281,18 @@ class Debride < MethodBasedSexpProcessor
         end
         record_method name, file, line
       end
-    when :send, :public_send, :__send__ then
+    when :send, :public_send, :__send__, :try then
       # s(:call, s(:const, :Seattle), :send, s(:lit, :raining?))
       _, _, _, msg_arg, * = sexp
       if Sexp === msg_arg && [:lit, :str].include?(msg_arg.sexp_type) then
         called << msg_arg.last.to_sym
       end
+    when :const_get then
+      # s(:call, s(:const, :X), :const_get, s(:lit, :Y)) same as: X::Y
+      _, lhs, _, rhs = sexp
+      process lhs
+      rhs = name_to_string process rhs
+      called << rhs.to_sym
     when :delegate then
       # s(:call, nil, :delegate, ..., s(:hash, s(:lit, :to), s(:lit, :delegator)))
       possible_hash = sexp.last
@@ -290,6 +304,12 @@ class Debride < MethodBasedSexpProcessor
           called << val.last        if val.sexp_type == :lit
           called << val.last.to_sym if val.sexp_type == :str
         end
+      end
+    when :method then
+      # s(:call, nil, :method, s(:lit, :foo))
+      _, _, _, msg_arg, * = sexp
+      if Sexp === msg_arg && [:lit, :str].include?(msg_arg.sexp_type) then
+        called << msg_arg.last.to_sym
       end
     when *RAILS_DSL_METHODS, *RAILS_VALIDATION_METHODS then
       if option[:rails]
@@ -329,6 +349,21 @@ class Debride < MethodBasedSexpProcessor
     sexp
   end
 
+  def process_block_pass exp # :nodoc:
+    _, name = exp
+
+    case name.sexp_type
+    when :lit then              # eg &:to_sym
+      called << name.last
+    else                        # eg &lvar or &method(:x)
+      # do nothing, body will get processed below
+    end
+
+    process_until_empty exp
+
+    exp
+  end
+
   def process_cdecl exp # :nodoc:
     _, name, val = exp
 
@@ -348,7 +383,7 @@ class Debride < MethodBasedSexpProcessor
 
   def name_to_string exp
     case exp.sexp_type
-    when :const then
+    when :const, :lit, :str then
       exp.last.to_s
     when :colon2 then
       _, lhs, rhs = exp
@@ -401,6 +436,8 @@ class Debride < MethodBasedSexpProcessor
       process_until_empty sexp
     end
   end
+
+  alias process_safe_call process_call
 
   ##
   # Calculate the difference between known methods and called methods.
@@ -541,7 +578,7 @@ class Debride < MethodBasedSexpProcessor
     :around_action,
     :before_action,
 
-    # http://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html
+    # https://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html
     :after_commit,
     :after_create,
     :after_destroy,
@@ -562,7 +599,7 @@ class Debride < MethodBasedSexpProcessor
     :before_update,
     :before_validation,
 
-    # http://api.rubyonrails.org/classes/ActiveModel/Validations/ClassMethods.html#method-i-validate
+    # https://api.rubyonrails.org/classes/ActiveModel/Validations/ClassMethods.html#method-i-validate
     :validate,
   ]
 
