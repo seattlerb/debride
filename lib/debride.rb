@@ -281,18 +281,12 @@ class Debride < MethodBasedSexpProcessor
         end
         record_method name, file, line
       end
-    when :send, :public_send, :__send__, :try then
+    when :send, :public_send, :__send__, :try, :const_get then
       # s(:call, s(:const, :Seattle), :send, s(:lit, :raining?))
       _, _, _, msg_arg, * = sexp
       if Sexp === msg_arg && [:lit, :str].include?(msg_arg.sexp_type) then
         called << msg_arg.last.to_sym
       end
-    when :const_get then
-      # s(:call, s(:const, :X), :const_get, s(:lit, :Y)) same as: X::Y
-      _, lhs, _, rhs = sexp
-      process lhs
-      rhs = name_to_string process rhs
-      called << rhs.to_sym
     when :delegate then
       # s(:call, nil, :delegate, ..., s(:hash, s(:lit, :to), s(:lit, :delegator)))
       possible_hash = sexp.last
@@ -567,6 +561,10 @@ class Debride < MethodBasedSexpProcessor
     data[:focus] = focus if focus
 
     YAML.dump data, io
+  end
+
+  def inspect
+    "Debride[current=%s]" % [signature]
   end
 
   ##
