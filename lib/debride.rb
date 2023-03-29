@@ -56,7 +56,7 @@ class Debride < MethodBasedSexpProcessor
     expander = PathExpander.new(args, glob)
     files = expander.process
     excl  = debride.option[:exclude]
-    excl.map! { |fd| File.directory?(fd) ? "#{fd}/" : fd } if excl
+    excl.map! { |fd| File.directory?(fd) ? "#{fd}/**/*" : fd } if excl
 
     files = expander.filter_files files, StringIO.new(excl.join "\n") if excl
 
