@@ -7,6 +7,7 @@ Hoe::add_include_dirs("../../sexp_processor/dev/lib",
                       "../../ruby_parser/dev/lib",
                       "../../ruby2ruby/dev/lib",
                       "../../ZenTest/dev/lib",
+                      "../../debride-erb/dev/lib",
                       "../../path_expander/dev/lib",
                       "lib")
 
@@ -29,6 +30,8 @@ def run dir, whitelist
 
   ENV["GEM_HOME"] = "tmp/isolate"
   ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate"
+
+  Gem.paths = ENV
 
   whitelist = whitelist && ["--whitelist", whitelist]
   verbose   = ENV["V"]  && "-v"
