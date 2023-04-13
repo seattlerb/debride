@@ -1,73 +1,26 @@
-#!/usr/bin/ruby -w
+#!/usr/bin/env ruby -ws
 
-def autoclave nuke
-  skips = 0
+$C ||= false # command to run between deletions
 
-  nuke.each do |path, ary|
-    # warn path
+require "set"
+require_relative "../lib/debride"
 
-    file = File.readlines path
+def autoclave nuke, cmd
+  nuke.each do |path, lines_to_remove, klass, name|
+    warn "#{path} #{lines_to_remove} #{klass}##{name}"
 
-    ary.each do |(line, name)|
-      opener = file[line-1]
-
-      case opener
-      when /^\s*def/
-        # do nothing
-      else # attr_accessor, etc
-        # warn "  unsupported: #{opener.strip}"
-        skips += 1
-        next
-      end
-
-      leader = opener[/^\s+/]
-      end_line = file[line..-1].find_index { |l| l =~ /^#{leader}end/ }
-
-      if end_line then
-        end_line += line + 1
-        end_line += 1 while file[end_line] =~ /^\s*$/
-        end_line += 1 while file[end_line] =~ /^\s*alias.*?\b#{name}$/
-        end_line += 1 while file[end_line] =~ /^\s*$/
-
-        end_line.downto line do |i|
-          file.delete_at(i-1)
-        end
-      else
-        warn "NOT FOUND: ending for #{name} #{path}:#{line}"
-      end
-    end
+    file = File.foreach(path).with_index.map { |l, i| [i+1, l] }
 
     File.open path, "w" do |f|
-      f.write file.join
+      file.each do |idx, line|
+        # skip empty line after a removed line
+        next if line.chomp.empty? && lines_to_remove.include?(idx-1)
+        f.write line unless lines_to_remove.include? idx
+      end
     end
+
+    `#{cmd.gsub(/\bNAME\b/, "#{klass}##{name}").gsub(/\bPATH\b/, path)}` if cmd
   end
-
-  print " skips = %3d" % skips if skips > 0
-end
-
-def read_debride path
-  nuke = Hash.new { |h,k| h[k] = [] }
-
-  count = 0
-
-  File.foreach path do |line|
-    case line
-    when /^  (\S+)\s+(\S+):(\d+)$/ then
-      name, path, line = $1, $2, $3.to_i
-      nuke[path] << [line, name]
-      count += 1
-    when /^[\w:]+$/, "\n", /:$/ then
-      # ignore
-    else
-      warn "unparsed: #{line.chomp}"
-    end
-  end
-
-  nuke.each do |k, ary|
-    nuke[k] = ary.sort.reverse
-  end
-
-  [nuke, count]
 end
 
 iter = 0
@@ -75,22 +28,32 @@ old_count = nil
 
 abort "usage: #{$0} [debride args]+" if ARGV.empty? or ARGV.include? "-h"
 
-cmd = %w[debride] + ARGV + %w[> dummy_for_cmd_below]
-
 loop do
   iter += 1
-  dead = "dead%02d.txt" % iter
-  cmd[-1] = dead
 
-  Process.wait Process.spawn cmd.join " "
-  abort "debride failed: #{$?}" unless $?.success?
+  debride = Debride.run ARGV.dup
 
-  nuke, count = read_debride dead
+  min = debride.option[:minimum] || 0
 
-  break if old_count == count
+  nuke = debride.missing_locations
+    .flat_map { |klass, meths|
+      meths
+        .reject { |(meth, loc)| !loc }
+        .map { |(meth, loc)|
+          path, start, finish = /^(.+):(\d+)(?:-(\d+))?$/.match(loc).captures
+          finish ||= start
+          [path, start.to_i..finish.to_i, klass, meth]
+        }
+        .reject { |p,r,k,m| r.size <= min }
+    }
+    .sort_by { |p,r,k,m| [p, -r.begin, m] }
+
+  count = nuke.size
+
+  break if count.zero? || old_count == count
   old_count = count
 
-  print "iter = %2d count = %4d" % [iter, count]
-  autoclave nuke
+  puts "iter = %2d count = %4d" % [iter, count]
+  autoclave nuke, $C
   puts
 end
