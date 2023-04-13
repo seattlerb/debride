@@ -111,7 +111,14 @@ class Debride < MethodBasedSexpProcessor
 
   def self.parse_options args
     options = {
-      :whitelist => [],
+      :whitelist => %i[
+                       extended
+                       included
+                       inherited
+                       method_added
+                       method_missing
+                       prepended
+                      ],
       :exclude => [],
       :format => :text,
     }
@@ -577,7 +584,7 @@ class Debride < MethodBasedSexpProcessor
     :around_action,
     :before_action,
 
-    # https://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html
+    # https://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html (at bottom)
     :after_commit,
     :after_create,
     :after_destroy,
@@ -611,6 +618,7 @@ class Debride < MethodBasedSexpProcessor
     :validates,
     :validates_absence_of,
     :validates_acceptance_of,
+    :validates_comparison_of,
     :validates_confirmation_of,
     :validates_exclusion_of,
     :validates_format_of,

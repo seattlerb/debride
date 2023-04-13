@@ -63,4 +63,23 @@ task :debug do
   run f, nil
 end
 
+task :rm => :isolate do
+  ENV["GEM_HOME"] = "tmp/isolate"
+  ENV["GEM_PATH"] = "#{Gem.paths.path.join ":"}:../../debride-erb/dev/tmp/isolate"
+  f = "zendesk_ruby"
+  # f = "zendesk_ruby/app/helpers"
+  # f = "zendesk_ruby/app/helpers/users_helper.rb"
+
+  ruby("-Ilib:#{Hoe::include_dirs.join ":"}",
+       "./bin/debride_rm",
+       "-C=cd zendesk_ruby ; git commit -m 'debride NAME in PATH' .",
+       "--", # needed for ruby -s ??
+       "--rails",
+       "--whitelist", "zendesk_whitelist.txt",
+       "--exclude", "zendesk_ruby/test",
+       "--exclude", "zendesk_ruby/script",
+       "--minimum", "30",
+       f)
+end
+
 # vim: syntax=ruby

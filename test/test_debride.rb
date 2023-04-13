@@ -33,10 +33,14 @@ class TestDebride < Minitest::Test
 
   EXP_FORMATTED = { :missing => formatted_vals }
 
+  make_my_diffs_pretty!
+
   def assert_option arg, exp_arg, exp_opt
     opt = SafeDebride.parse_options arg
 
-    exp_opt = {:whitelist => [], :exclude => [], :format => :text}.merge exp_opt
+    wl = [:extended, :included, :inherited, :method_added, :method_missing, :prepended]
+
+    exp_opt = {:whitelist => wl, :exclude => [], :format => :text}.merge exp_opt
     assert_equal exp_opt, opt
     assert_equal exp_arg, arg
   end
