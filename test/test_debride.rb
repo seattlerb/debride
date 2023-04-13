@@ -1,6 +1,8 @@
 require "minitest/autorun"
 require "debride"
 
+$: << "../../debride-erb/dev/tmp/isolate"
+
 class SafeDebride < Debride
   def self.abort s
     raise s
@@ -34,7 +36,7 @@ class TestDebride < Minitest::Test
   def assert_option arg, exp_arg, exp_opt
     opt = SafeDebride.parse_options arg
 
-    exp_opt = {:whitelist => [], :format => :text}.merge exp_opt
+    exp_opt = {:whitelist => [], :exclude => [], :format => :text}.merge exp_opt
     assert_equal exp_opt, opt
     assert_equal exp_arg, arg
   end
@@ -500,8 +502,8 @@ class TestDebride < Minitest::Test
            "AttributeAccessor#w4="        => "(io):3",
            "AttributeAccessor#r1"         => "(io):4",
            "AttributeAccessor#r2"         => "(io):4",
-           "AttributeAccessor#initialize" => "(io):5-9",
-           "AttributeAccessor::class_method" => "(io):12-13"
+           "AttributeAccessor#initialize" => "(io):5-10",
+           "AttributeAccessor::class_method" => "(io):12-14"
           }
 
     assert_equal exp, d.method_locations
