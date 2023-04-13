@@ -112,6 +112,7 @@ class Debride < MethodBasedSexpProcessor
   def self.parse_options args
     options = {
       :whitelist => [],
+      :exclude => [],
       :format => :text,
     }
 
@@ -129,7 +130,7 @@ class Debride < MethodBasedSexpProcessor
       end
 
       opts.on("-e", "--exclude FILE1,FILE2,ETC", Array, "Exclude files or directories in comma-separated list.") do |list|
-        options[:exclude] = list
+        options[:exclude].concat list
       end
 
       opts.on("-w", "--whitelist FILE", String, "Whitelist these messages.") do |s|
