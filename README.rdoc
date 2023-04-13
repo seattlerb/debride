@@ -42,7 +42,7 @@ API), then you can whitelist it:
   MyClass
     bad_method                          lib/some/file.rb:20
   ...
-  
+
 Usage example for a typical rails application:
   # dump rake routes into a file
   % rake routes > routes.txt
@@ -53,12 +53,19 @@ Usage example for a typical rails application:
   % echo down >> whitelist.txt
   % echo change >> whitelist.txt
   # output debride report co standard output with the following options:
-  # ignore typical rails methods, 
+  # ignore typical rails methods,
   # specify generated whitelist,
   # run in current directory (".")
   % debride --rails --whitelist whitelist.txt .
 
 You can also use regexps in your whitelist by delimiting them with //'s.
+
+To generate a whitelist for the last 28 days worth of logs on papertrail:
+
+  % seq 2 29 | xargs -I {} date -u -v-{}d +%Y-%m-%d | \
+    xargs -I {} curl --progress-bar -f --no-include -L -H "X-Papertrail-Token: $PAPERTRAIL_APIKEY" https://papertrailapp.com/api/v1/archives/{}/download | \
+    gzip -dc | grep production.log | cut -f 10- | \
+    debride_rails_whitelist routes.txt - | sort -u > whitelist.txt
 
 == PLUGINS:
 
@@ -69,7 +76,7 @@ debride-slim :: Extends debride to analyze Slim files
 
 == EDITOR INTEGRATION:
 
-TextMate 2 :: * {Debride-Rails.tmbundle}[https://github.com/jjuliano/Debride-Rails.tmbundle] - Debride with Rails support 
+TextMate 2 :: * {Debride-Rails.tmbundle}[https://github.com/jjuliano/Debride-Rails.tmbundle] - Debride with Rails support
               * {Debride.tmbundle}[https://github.com/jjuliano/Debride-Rails.tmbundle] - Debride for Ruby
 
 == REQUIREMENTS:
