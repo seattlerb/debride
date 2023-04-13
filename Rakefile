@@ -29,7 +29,7 @@ def run dir, whitelist
   abort "Specify dir to scan with D=<path>" unless dir
 
   ENV["GEM_HOME"] = "tmp/isolate"
-  ENV["GEM_PATH"] = "../../debride-erb/dev/tmp/isolate"
+  ENV["GEM_PATH"] = "#{Gem.paths.path.join ":"}:../../debride-erb/dev/tmp/isolate"
 
   Gem.paths = ENV
 
