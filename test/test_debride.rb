@@ -11,9 +11,9 @@ end
 
 class TestDebride < Minitest::Test
   EXP_LIST = [["Debride",
-               [:process_attrasgn,
+               [:process_alias,
+                :process_attrasgn,
                 :process_block_pass,
-                :process_call,
                 :process_cdecl,
                 :process_colon2,
                 :process_colon3,
@@ -22,6 +22,7 @@ class TestDebride < Minitest::Test
                 :process_defs,
                 :process_op_asgn2,
                 :process_rb,
+                :process_safe_call,
                 :report,
                 :report_json,
                 :report_text,
@@ -149,7 +150,7 @@ class TestDebride < Minitest::Test
     debride.report(io)
 
     exp  = JSON.load JSON.dump EXP_FORMATTED # force stringify
-    data = JSON.load io.string.gsub(/\d+-\d+/, "###")
+    data = JSON.load io.string.gsub(/:\d+(-\d+)?/, ":###")
 
     assert_equal exp, data
   end
@@ -161,7 +162,7 @@ class TestDebride < Minitest::Test
     debride.report(io)
 
     exp  = EXP_FORMATTED
-    data = YAML.load io.string.gsub(/\d+-\d+/, "###")
+    data = YAML.load io.string.gsub(/:\d+(-\d+)?/, ":###")
 
     assert_equal exp, data
   end

@@ -342,6 +342,17 @@ class Debride < MethodBasedSexpProcessor
       method_name = method_name.to_s.delete_suffix("_path").to_sym if option[:rails]
     when /^deliver_/ then
       method_name = method_name.to_s.delete_prefix("deliver_").to_sym if option[:rails]
+    when :alias_method then
+      _, _, _, lhs, rhs = sexp
+
+      if Sexp === lhs and Sexp === rhs then
+        lhs = lhs.last
+        rhs = rhs.last
+
+        record_method lhs, sexp.file, sexp.line
+
+        called << rhs
+      end
     end
 
     called << method_name
@@ -349,6 +360,16 @@ class Debride < MethodBasedSexpProcessor
     process_until_empty sexp
 
     sexp
+  end
+
+  def process_alias exp
+    _, (_, lhs), (_, rhs) = exp
+
+    record_method lhs, exp.file, exp.line
+
+    called << rhs
+
+    exp
   end
 
   def process_block_pass exp # :nodoc:
