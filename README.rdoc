@@ -67,6 +67,34 @@ To generate a whitelist for the last 28 days worth of logs on papertrail:
     gzip -dc | grep production.log | cut -f 10- | \
     debride_rails_whitelist routes.txt - | sort -u > whitelist.txt
 
+== debride_rm
+
+debride_rm will automatically remove dead code and optionally run a
+command in between each removal. The command will automatically
+substitute "NAME" and "PATH" with the name and path of the thing being
+removed. Eg:
+
+  % debride_rm -C="git commit -m 'debride NAME in PATH' ." \
+      --rails \
+      --whitelist whitelist.txt \
+      --exclude test \
+      --exclude script \
+      --exclude bin \
+      --minimum 30
+
+This command will:
+
+1. run with rails extensions on
+2. treat anything named in whitelist.txt as "called"
+3. exclude directories that shouldn't be scanned or mutated
+4. exclude anything under 30 lines long
+
+One thing to note, debride_rm doesn't do terribly well with things
+like attr_accessor lists, so running debride_rm with --minimum 2 (or
+more) is wise.
+
+Strategy: start large (40+) and work your way down.
+
 == PLUGINS:
 
 debride-erb  :: Extends debride to analyze erb files (via erubis ala rails).
