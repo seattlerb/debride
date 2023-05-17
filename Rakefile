@@ -20,8 +20,8 @@ Hoe.spec "debride" do
   developer "Ryan Davis", "ryand-ruby@zenspider.com"
   license "MIT"
 
-  dependency "sexp_processor", "~> 4.5"
-  dependency "ruby_parser", "~> 3.6"
+  dependency "sexp_processor", "~> 4.17"
+  dependency "ruby_parser", "~> 3.20"
   dependency "path_expander",  "~> 1.0"
 end
 
