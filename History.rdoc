@@ -1,3 +1,23 @@
+=== 1.12.0 / 2023-05-18
+
+* 1 major enhancement:
+
+  * Massive overhaul of bin/debride_rm: faster, cleaner, can run a command between each deletion.
+
+* 2 minor enhancements:
+
+  * Added alias_method and alias as pseudo-calls to source method.
+  * Whitelist extended/included/prepended etc by default.
+
+* 6 bug fixes:
+
+  * Added missing rails validation.
+  * Bumped sexp_processor and ruby_parser dependencies.
+  * Fix --exclude <dir> to properly exclude whole tree.
+  * Fixed --exclude option to make it repeatable.
+  * Fixed bug on anonymous block forwarding (eg fn(&)). (afuno)
+  * Use RubyParser.new instead of RubyParser.for_current_ruby.
+
 === 1.11.0 / 2023-03-24
 
 * 6 minor enhancements:
