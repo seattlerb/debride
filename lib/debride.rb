@@ -97,8 +97,7 @@ class Debride < MethodBasedSexpProcessor
       raise "Unhandled type: #{path_or_io.class}:#{path_or_io.inspect}"
     end
 
-    rp = RubyParser.for_current_ruby rescue RubyParser.new
-    rp.process(file, path, option[:timeout])
+    RubyParser.new.process(file, path, option[:timeout])
   rescue Racc::ParseError, RegexpError => e
     warn "Parse Error parsing #{path}. Skipping."
     warn "  #{e.message}"
