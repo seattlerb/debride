@@ -341,6 +341,14 @@ class TestDebride < Minitest::Test
     assert_process [["Seattle", [:uncalled]]], ruby
   end
 
+  def test_block_pass_empty
+    ruby = <<-RUBY.strip
+      f(&) # block forwarding
+    RUBY
+
+    assert_process [], ruby
+  end
+
   def test_safe_navigation_operator
     ruby = <<-RUBY.strip
       class Seattle

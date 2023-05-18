@@ -375,6 +375,8 @@ class Debride < MethodBasedSexpProcessor
   def process_block_pass exp # :nodoc:
     _, name = exp
 
+    return exp unless name
+
     case name.sexp_type
     when :lit then              # eg &:to_sym
       called << name.last
