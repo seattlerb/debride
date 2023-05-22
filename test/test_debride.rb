@@ -20,6 +20,7 @@ class TestDebride < Minitest::Test
                 :process_const,
                 :process_defn,
                 :process_defs,
+                :process_hash,
                 :process_op_asgn2,
                 :process_rb,
                 :process_safe_call,
@@ -254,6 +255,29 @@ class TestDebride < Minitest::Test
     exp = [["QuarterPounder", [:royale, :royale_with_cheese]]]
 
     assert_process exp, ruby, :rails => true
+  end
+
+  def test_hash_shorthand
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.status
+          { raining?:, sunny?: false }
+        end
+
+        def self.raining?
+          true
+        end
+
+        def self.sunny?
+          true
+        end
+      end
+
+      Seattle.status
+    RUBY
+
+    exp = [["Seattle", [:sunny?]]]
+    assert_process exp, ruby
   end
 
   def test_cdecl_const2

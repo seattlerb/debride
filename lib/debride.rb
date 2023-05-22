@@ -461,6 +461,17 @@ class Debride < MethodBasedSexpProcessor
     end
   end
 
+  # Handle new Hash shorthand { raining?:, sunny?: false }. raining? is called. sunny? is not.
+  def process_hash exp # :nodoc:
+    exp.sexp_body.each_slice(2) do |key, val|
+      next unless val.nil?
+
+      called << key.last
+    end
+
+    exp
+  end
+
   alias process_safe_call process_call
 
   ##
