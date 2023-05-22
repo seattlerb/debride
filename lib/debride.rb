@@ -469,6 +469,8 @@ class Debride < MethodBasedSexpProcessor
       called << key.last
     end
 
+    process_until_empty exp
+
     exp
   end
 

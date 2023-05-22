@@ -261,7 +261,7 @@ class TestDebride < Minitest::Test
     ruby = <<-RUBY.strip
       class Seattle
         def self.status
-          { raining?:, sunny?: false }
+          { raining?:, sunny?: false, humid?: humid? }
         end
 
         def self.raining?
@@ -269,6 +269,10 @@ class TestDebride < Minitest::Test
         end
 
         def self.sunny?
+          true
+        end
+
+        def self.humid?
           true
         end
       end
