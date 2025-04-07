@@ -1,6 +1,7 @@
-#!/usr/bin/env ruby -ws
+#!/usr/bin/env -S ruby -ws
 
 $C ||= false # command to run between deletions
+$y ||= false # yes, actually execute autoclave
 
 require "set"
 require_relative "../lib/debride"
@@ -19,14 +20,20 @@ def autoclave nuke, cmd
       end
     end
 
-    `#{cmd.gsub(/\bNAME\b/, "#{klass}##{name}").gsub(/\bPATH\b/, path)}` if cmd
+    if cmd then
+      expanded = cmd.gsub(/\bNAME\b/, "#{klass}##{name}").gsub(/\bPATH\b/, path)
+      warn "CMD = %p" % [expanded]
+      `#{expanded}` if $y
+    end
   end
 end
 
 iter = 0
 old_count = nil
 
-abort "usage: #{$0} [-C=cmd] [debride args]+" if ARGV.empty? or ARGV.include? "-h"
+abort "usage: #{$0} [-y] [-C=cmd] [debride args]+" if ARGV.empty? or ARGV.include? "-h"
+
+warn "NOT running commands, use -y to execute" unless $y
 
 loop do
   iter += 1
