@@ -1,3 +1,14 @@
+=== 1.13.0 / 2025-06-10
+
+* 2 minor enhancements:
+
+  * Added -y to debride_rm to opt-in to running autoclave.
+  * Print command for autoclave to help see what's happening.
+
+* 1 bug fix:
+
+  * Fixed shebangs on all bin/* files, added -w for all.
+
 === 1.12.0 / 2023-05-18
 
 * 1 major enhancement:
