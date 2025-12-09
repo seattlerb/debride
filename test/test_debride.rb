@@ -342,8 +342,11 @@ class TestDebride < Minitest::Test
   end
 
   def test_block_pass_empty
-    ruby = <<-RUBY.strip
-      f(&) # block forwarding
+    ruby = <<~RUBY
+      def g(&)
+        f(&) # block forwarding
+      end
+      g
     RUBY
 
     assert_process [], ruby

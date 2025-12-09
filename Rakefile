@@ -21,7 +21,7 @@ Hoe.spec "debride" do
   license "MIT"
 
   dependency "sexp_processor", "~> 4.17"
-  dependency "ruby_parser", "~> 3.20"
+  dependency "prism",          "~> 1.5"
   dependency "path_expander",  "~> 1.0"
 end
 

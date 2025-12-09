@@ -4,9 +4,21 @@ require "optparse"
 require "set"
 require "stringio"
 
-require "ruby_parser"
 require "sexp_processor"
 require "path_expander"
+
+require "prism"
+require "prism/translation/ruby_parser"
+
+unless Prism::Translation::RubyParser.method_defined? :process then
+  class Prism::Translation::RubyParser # compatibility layer
+    def process(ruby, file, timeout=nil) =
+      Timeout.timeout(timeout) { parse ruby, file }
+  end
+end
+
+class NotRubyParser < Prism::Translation::RubyParser # compatibility layer
+end
 
 ##
 # A static code analyzer that points out possible dead methods.
@@ -47,14 +59,12 @@ class Debride < MethodBasedSexpProcessor
   # Top level runner for bin/debride.
 
   def self.run args
-    opt = parse_options args
-
-    debride = Debride.new opt
+    debride = Debride.new parse_options args
 
     extensions = self.file_extensions
     glob = "**/*.{#{extensions.join(",")}}"
     expander = PathExpander.new(args, glob)
-    files = expander.process
+    files = expander.process.to_a
     excl  = debride.option[:exclude]
     excl.map! { |fd| File.directory?(fd) ? "#{fd}/**/*" : fd } if excl
 
@@ -97,7 +107,8 @@ class Debride < MethodBasedSexpProcessor
       raise "Unhandled type: #{path_or_io.class}:#{path_or_io.inspect}"
     end
 
-    RubyParser.new.process(file, path, option[:timeout])
+    parser = option[:parser].new
+    parser.process(file, path, option[:timeout])
   rescue Racc::ParseError, RegexpError => e
     warn "Parse Error parsing #{path}. Skipping."
     warn "  #{e.message}"
@@ -161,6 +172,11 @@ class Debride < MethodBasedSexpProcessor
         options[:minimum] = n
       end
 
+      opts.on "--legacy" "Use RubyParser for parsing." do
+        require "ruby_parser"
+        option[:parser] = RubyParser
+      end
+
       opts.on("-v", "--verbose", "Verbose. Show progress processing files.") do
         options[:verbose] = true
       end
@@ -208,6 +224,9 @@ class Debride < MethodBasedSexpProcessor
     self.option = { :whitelist => [] }.merge options
     self.known  = Hash.new { |h,k| h[k] = Set.new }
     self.called = Set.new
+
+    option[:parser] ||= NotRubyParser
+
     super()
   end
 
