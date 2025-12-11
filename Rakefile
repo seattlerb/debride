@@ -22,7 +22,7 @@ Hoe.spec "debride" do
 
   dependency "sexp_processor", "~> 4.17"
   dependency "prism",          "~> 1.5"
-  dependency "path_expander",  "~> 1.0"
+  dependency "path_expander",  "~> 2.0"
 end
 
 def run dir, whitelist
