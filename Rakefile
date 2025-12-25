@@ -11,7 +11,7 @@ Hoe::add_include_dirs("../../sexp_processor/dev/lib",
                       "../../path_expander/dev/lib",
                       "lib")
 
-Hoe.plugin :isolate
+Hoe.plugin :isolate_binaries
 Hoe.plugin :seattlerb
 Hoe.plugin :rdoc
 Hoe.plugin :cov
@@ -21,7 +21,7 @@ Hoe.spec "debride" do
   license "MIT"
 
   dependency "sexp_processor", "~> 4.17"
-  dependency "prism",          "~> 1.5"
+  dependency "prism",          "~> 1.7"
   dependency "path_expander",  "~> 2.0"
 end
 
