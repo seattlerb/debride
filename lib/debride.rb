@@ -3,6 +3,7 @@
 require "optparse"
 require "set"
 require "stringio"
+require "timeout"
 
 require "sexp_processor"
 require "path_expander"
@@ -109,7 +110,7 @@ class Debride < MethodBasedSexpProcessor
 
     parser = option[:parser].new
     parser.process(file, path, option[:timeout])
-  rescue Racc::ParseError, RegexpError => e
+  rescue RubyParser::SyntaxError, RegexpError => e
     warn "Parse Error parsing #{path}. Skipping."
     warn "  #{e.message}"
   rescue Timeout::Error
