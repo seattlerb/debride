@@ -166,7 +166,7 @@ class Debride < MethodBasedSexpProcessor
         options[:minimum] = n
       end
 
-      opts.on "--legacy" "Use RubyParser for parsing." do
+      opts.on "--legacy", "Use RubyParser for parsing." do
         require "ruby_parser"
         option[:parser] = RubyParser
       end
