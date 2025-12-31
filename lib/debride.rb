@@ -347,23 +347,26 @@ class Debride < MethodBasedSexpProcessor
 
       # try to detect route scope vs model scope
       if context.include? :module or context.include? :class then
-        file, line = sexp.file, sexp.line
-        record_method name, file, line
+        if string_like? name then
+          file, line = sexp.file, sexp.line
+          record_method name, file, line
+        end
       end
     when /_path$/ then
       method_name = method_name.to_s.delete_suffix("_path").to_sym if option[:rails]
     when /^deliver_/ then
       method_name = method_name.to_s.delete_prefix("deliver_").to_sym if option[:rails]
     when :alias_method then
+      # s(:call, nil, :alias_method, lhs, rhs)
       _, _, _, lhs, rhs = sexp
 
-      if Sexp === lhs and Sexp === rhs then
-        lhs = lhs.last
-        rhs = rhs.last
+      if string_like? lhs and string_like? rhs then
+        lhs = lhs.last.to_sym
+        rhs = rhs.last.to_sym
 
         record_method lhs, sexp.file, sexp.line
 
-        called << rhs
+        called << rhs # TODO: why?
       end
     end
 
@@ -372,6 +375,10 @@ class Debride < MethodBasedSexpProcessor
     process_until_empty sexp
 
     sexp
+  end
+
+  def string_like? s
+    Sexp === s and %i[lit str].include?(s.sexp_type)
   end
 
   def process_alias exp

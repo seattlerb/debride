@@ -1,5 +1,5 @@
 #!/usr/bin/env -S ruby -w
 
-require "debride"
+require_relative "../lib/debride"
 
 Debride.run(ARGV).report

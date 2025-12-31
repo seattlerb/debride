@@ -47,13 +47,15 @@ class TestDebride < Minitest::Test
     assert_equal exp_arg, arg
   end
 
-  def assert_process exp, ruby, opts = {}
+  def assert_process exp, ruby, called:nil, **opts
     io = StringIO.new ruby
 
     debride = Debride.new opts
     debride.process debride.process_rb io
 
     assert_equal exp, debride.missing
+    assert_equal Set[*called], debride.called if called
+
     debride
   end
 
@@ -239,6 +241,40 @@ class TestDebride < Minitest::Test
     RUBY
 
     assert_process [], s
+  end
+
+  def test_call__alias_method__symbol
+    ruby = <<~'RUBY'
+      class QuarterPounder
+        alias_method :get_x, :x
+      end
+    RUBY
+
+    exp = [["QuarterPounder", [:get_x]]]
+
+    assert_process exp, ruby, called:%i[x alias_method]
+  end
+
+  def test_call__alias_method__string
+    ruby = <<~'RUBY'
+      class QuarterPounder
+        alias_method "get_x", "x"
+      end
+    RUBY
+
+    exp = [["QuarterPounder", [:get_x]]]
+
+    assert_process exp, ruby, called:%i[x alias_method]
+  end
+
+  def test_call__alias_method__interpolated
+    ruby = <<~'RUBY'
+      class QuarterPounder
+        alias_method "get_#{integr}", integr
+      end
+    RUBY
+
+    assert_process [], ruby, called:%i[integr alias_method]
   end
 
   def test_alias_method_chain
