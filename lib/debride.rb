@@ -11,13 +11,6 @@ require "path_expander"
 require "prism"
 require "prism/translation/ruby_parser"
 
-unless Prism::Translation::RubyParser.method_defined? :process then
-  class Prism::Translation::RubyParser # compatibility layer
-    def process(ruby, file, timeout=nil) =
-      Timeout.timeout(timeout) { parse ruby, file }
-  end
-end
-
 class NotRubyParser < Prism::Translation::RubyParser # compatibility layer
 end
 
@@ -109,7 +102,7 @@ class Debride < MethodBasedSexpProcessor
     end
 
     parser = option[:parser].new
-    parser.process(file, path, option[:timeout])
+    parser.process file, path, option[:timeout]
   rescue RubyParser::SyntaxError, RegexpError => e
     warn "Parse Error parsing #{path}. Skipping."
     warn "  #{e.message}"
@@ -482,6 +475,21 @@ class Debride < MethodBasedSexpProcessor
   end
 
   alias process_safe_call process_call
+
+  def process_hash sexp
+    _, *pairs = sexp
+
+    pairs.each_slice 2 do |k, v|
+      if v.nil? && k.sexp_type == :lit then
+        called << k.last
+      else
+        process k
+        process v
+      end
+    end
+
+    sexp
+  end
 
   ##
   # Calculate the difference between known methods and called methods.

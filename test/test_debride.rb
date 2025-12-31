@@ -20,6 +20,7 @@ class TestDebride < Minitest::Test
                 :process_const,
                 :process_defn,
                 :process_defs,
+                :process_hash,
                 :process_op_asgn2,
                 :process_rb,
                 :process_safe_call,
@@ -350,6 +351,42 @@ class TestDebride < Minitest::Test
     RUBY
 
     assert_process [], ruby
+  end
+
+  def test_hash__shorthand
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.status
+          { raining: }
+        end
+
+        def self.raining
+          true
+        end
+      end
+
+      Seattle.status
+    RUBY
+
+    assert_process [], ruby
+  end
+
+  def test_hash__not_shorthand
+    ruby = <<-RUBY.strip
+      class Seattle
+        def self.status
+          { missing: }
+        end
+
+        def self.raining
+          true
+        end
+      end
+
+      Seattle.status
+    RUBY
+
+    assert_process [["Seattle", [:raining]]], ruby
   end
 
   def test_safe_navigation_operator
