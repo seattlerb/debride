@@ -343,13 +343,13 @@ class Debride < MethodBasedSexpProcessor
       end
     when *RAILS_MACRO_METHODS
       # s(:call, nil, :has_one, s(:lit, :has_one_relation), ...)
-      _, _, _, (_, name), * = sexp
+      _, _, _, name, * = sexp
 
       # try to detect route scope vs model scope
       if context.include? :module or context.include? :class then
         if string_like? name then
           file, line = sexp.file, sexp.line
-          record_method name, file, line
+          record_method name.last, file, line
         end
       end
     when /_path$/ then

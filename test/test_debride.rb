@@ -485,7 +485,7 @@ class TestDebride < Minitest::Test
   end
 
   def test_rails_dsl_macro_definitions
-    ruby = <<-RUBY.strip
+    ruby = <<~'RUBY'
       class RailsModel
         has_one :has_one_relation
         has_one :uncalled_has_one_relation
@@ -497,6 +497,9 @@ class TestDebride < Minitest::Test
         has_and_belongs_to_many :uncalled_has_and_belongs_to_many_relation
         scope :scope_method
         scope :uncalled_scope_method
+        scope :"interpolated_#{method}"
+        scope "another_#{method}"
+        scope "yet_another_#{method}".to_sym
 
         def instance_method_caller
           has_one_relation
