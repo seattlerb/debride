@@ -18,7 +18,7 @@ end
 # A static code analyzer that points out possible dead methods.
 
 class Debride < MethodBasedSexpProcessor
-  VERSION = "1.14.0" # :nodoc:
+  VERSION = "1.15.0" # :nodoc:
   PROJECT = "debride"
 
   def self.load_plugins proj = PROJECT
