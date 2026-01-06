@@ -11,15 +11,14 @@ require "path_expander"
 require "prism"
 require "prism/translation/ruby_parser"
 
-class NotRubyParser < Prism::Translation::RubyParser # compatibility layer
-end
-
 ##
 # A static code analyzer that points out possible dead methods.
 
 class Debride < MethodBasedSexpProcessor
   VERSION = "1.15.0" # :nodoc:
   PROJECT = "debride"
+
+  NotRubyParser = Class.new Prism::Translation::RubyParser # compatibility layer :nodoc:
 
   def self.load_plugins proj = PROJECT
     unless defined? @@plugins then
