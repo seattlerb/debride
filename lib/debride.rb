@@ -535,23 +535,24 @@ class Debride < MethodBasedSexpProcessor
   def missing_locations
     focus = option[:focus]
 
-    missing.map { |klass, meths|
-      bad = meths.map { |meth|
-        location =
-          method_locations["#{klass}##{meth}"] ||
-          method_locations["#{klass}::#{meth}"]
+    missing
+      .map { |klass, meths|
+        bad = meths.map { |meth|
+          location =
+            method_locations["#{klass}##{meth}"] ||
+            method_locations["#{klass}::#{meth}"]
 
-        if focus then
-          path = location[/(.+):\d+/, 1]
+          if focus then
+            path = location[/(.+):\d+/, 1]
 
-          next unless File.fnmatch(focus, path)
-        end
+            next unless File.fnmatch(focus, path)
+          end
 
-        [meth, location]
-      }.compact
+          [meth, location]
+        }.compact
 
-      [klass, bad]
-    }
+        [klass, bad]
+      }
       .to_h
       .reject { |k,v| v.empty? }
   end
