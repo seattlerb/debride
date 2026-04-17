@@ -425,6 +425,18 @@ class TestDebride < Minitest::Test
     assert_process [["Seattle", [:raining]]], ruby
   end
 
+  def test_hash__kwsplat_bug
+    ruby = <<~RUBY
+      {
+        a:,
+        **b,
+        c:,
+      }
+    RUBY
+
+    assert_process [], ruby
+  end
+
   def test_safe_navigation_operator
     ruby = <<-RUBY.strip
       class Seattle

@@ -82,10 +82,16 @@ class Debride < MethodBasedSexpProcessor
 
       begin
         process send(msg, file)
-      rescue RuntimeError, SyntaxError => e
+      rescue StandardError, SyntaxError => e
         warn "  skipping #{file}: #{e.message}"
       end
     end
+  end
+
+  def process exp # :nodoc:
+    super
+  rescue => e # override to capture these but move on
+    warn "  skipping: #{e.message}"
   end
 
   def process_rb path_or_io
@@ -484,6 +490,9 @@ class Debride < MethodBasedSexpProcessor
 
   def process_hash sexp
     _, *pairs = sexp
+
+    # pad kwsplat to survive each_slice 2
+    pairs = pairs.flat_map { |s| s && s.sexp_type == :kwsplat ? [s, nil] : [s] }
 
     pairs.each_slice 2 do |k, v|
       if v.nil? && k.sexp_type == :lit then
