@@ -15,7 +15,7 @@ require "prism/translation/ruby_parser"
 # A static code analyzer that points out possible dead methods.
 
 class Debride < MethodBasedSexpProcessor
-  VERSION = "1.15.1" # :nodoc:
+  VERSION = "1.15.2" # :nodoc:
   PROJECT = "debride"
 
   NotRubyParser = Class.new Prism::Translation::RubyParser # compatibility layer :nodoc:
